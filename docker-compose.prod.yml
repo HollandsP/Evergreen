@@ -1,0 +1,185 @@
+version: '3.8'
+
+# Production configuration
+services:
+  api:
+    image: ${DOCKER_REGISTRY:-docker.io}/${DOCKER_IMAGE:-evergreen-pipeline}:${VERSION:-latest}
+    restart: always
+    environment:
+      - APP_ENV=production
+      - DEBUG=false
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+        labels: "service=api"
+
+  worker:
+    image: ${DOCKER_REGISTRY:-docker.io}/${DOCKER_IMAGE:-evergreen-pipeline}:${VERSION:-latest}
+    restart: always
+    command: celery -A workers.celery_app worker --loglevel=warning --concurrency=4 --max-memory-per-child=500000
+    environment:
+      - APP_ENV=production
+      - DEBUG=false
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+        labels: "service=worker"
+
+  beat:
+    image: ${DOCKER_REGISTRY:-docker.io}/${DOCKER_IMAGE:-evergreen-pipeline}:${VERSION:-latest}
+    restart: always
+    deploy:
+      replicas: 1  # Only one beat scheduler
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+        labels: "service=beat"
+
+  db:
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deploy/docker/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        labels: "service=db"
+
+  redis:
+    restart: always
+    volumes:
+      - redis_data:/data
+      - ./deploy/docker/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+        labels: "service=redis"
+
+  flower:
+    image: ${DOCKER_REGISTRY:-docker.io}/${DOCKER_IMAGE:-evergreen-pipeline}:${VERSION:-latest}
+    restart: always
+    environment:
+      - FLOWER_BASIC_AUTH=${FLOWER_BASIC_AUTH}
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+        labels: "service=flower"
+
+  nginx:
+    restart: always
+    volumes:
+      - ./deploy/docker/nginx-prod.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./static:/usr/share/nginx/html/static:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+        labels: "service=nginx"
+
+secrets:
+  db_password:
+    external: true
+
+volumes:
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/postgres
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/redis

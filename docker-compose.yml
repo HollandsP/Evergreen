@@ -1,0 +1,231 @@
+version: '3.8'
+
+services:
+  # API Service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: 3.9
+    image: evergreen-pipeline:latest
+    container_name: evergreen-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - DEBUG=${DEBUG:-false}
+      - DATABASE_URL=postgresql://pipeline:pipeline@db:5432/pipeline
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      - RUNWAY_API_KEY=${RUNWAY_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - S3_BUCKET=${S3_BUCKET:-content-pipeline-media}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - ./output:/app/output
+      - ./stories:/app/stories:ro
+      - ./templates:/app/templates:ro
+      - ./config:/app/config:ro
+    networks:
+      - evergreen-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+
+  # Celery Worker
+  worker:
+    image: evergreen-pipeline:latest
+    # container_name removed to allow replicas
+    restart: unless-stopped
+    command: celery -A workers.celery_app worker --loglevel=info --concurrency=4
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - DATABASE_URL=postgresql://pipeline:pipeline@db:5432/pipeline
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      - RUNWAY_API_KEY=${RUNWAY_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - S3_BUCKET=${S3_BUCKET:-content-pipeline-media}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - ./output:/app/output
+      - ./stories:/app/stories:ro
+      - ./templates:/app/templates:ro
+    networks:
+      - evergreen-network
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+  # Celery Beat Scheduler
+  beat:
+    image: evergreen-pipeline:latest
+    container_name: evergreen-beat
+    restart: unless-stopped
+    command: celery -A workers.celery_app beat --loglevel=info
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - DATABASE_URL=postgresql://pipeline:pipeline@db:5432/pipeline
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - evergreen-network
+
+  # PostgreSQL Database
+  db:
+    image: postgres:14-alpine
+    container_name: evergreen-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=pipeline
+      - POSTGRES_USER=pipeline
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-pipeline}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=en_US.utf8 --lc-ctype=en_US.utf8
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    networks:
+      - evergreen-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pipeline -d pipeline"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    container_name: evergreen-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - evergreen-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Flower - Celery Monitoring
+  flower:
+    image: evergreen-pipeline:latest
+    container_name: evergreen-flower
+    restart: unless-stopped
+    command: celery -A workers.celery_app flower --port=5555 --basic-auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-admin}
+    ports:
+      - "${FLOWER_PORT:-5555}:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - evergreen-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5555/api/workers"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Database Migration Service
+  migrate:
+    image: evergreen-pipeline:latest
+    container_name: evergreen-migrate
+    command: alembic upgrade head
+    environment:
+      - DATABASE_URL=postgresql://pipeline:pipeline@db:5432/pipeline
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - evergreen-network
+    restart: "no"
+
+  # Nginx Reverse Proxy (optional, for production)
+  nginx:
+    image: nginx:alpine
+    container_name: evergreen-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/docker/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - evergreen-network
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  evergreen-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

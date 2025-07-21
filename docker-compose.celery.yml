@@ -1,0 +1,153 @@
+version: '3.8'
+
+services:
+  # RabbitMQ message broker
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: evergreen_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-password}
+      RABBITMQ_DEFAULT_VHOST: evergreen
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - evergreen_network
+
+  # Celery worker for script processing
+  worker_script:
+    build: .
+    container_name: evergreen_worker_script
+    command: celery -A workers.celery_app worker --loglevel=info --queues=script --concurrency=4 --hostname=worker-script@%h
+    environment:
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - RABBITMQ_URL=${RABBITMQ_URL:-amqp://admin:password@rabbitmq:5672/evergreen}
+      - DATABASE_URL=${DATABASE_URL}
+      - PYTHONPATH=/app
+    depends_on:
+      - redis
+      - rabbitmq
+      - db
+    volumes:
+      - ./output:/app/output
+    restart: unless-stopped
+    networks:
+      - evergreen_network
+
+  # Celery worker for voice synthesis
+  worker_voice:
+    build: .
+    container_name: evergreen_worker_voice
+    command: celery -A workers.celery_app worker --loglevel=info --queues=voice --concurrency=2 --hostname=worker-voice@%h
+    environment:
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - RABBITMQ_URL=${RABBITMQ_URL:-amqp://admin:password@rabbitmq:5672/evergreen}
+      - DATABASE_URL=${DATABASE_URL}
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      - PYTHONPATH=/app
+    depends_on:
+      - redis
+      - rabbitmq
+      - db
+    volumes:
+      - ./output:/app/output
+    restart: unless-stopped
+    networks:
+      - evergreen_network
+
+  # Celery worker for video generation
+  worker_video:
+    build: .
+    container_name: evergreen_worker_video
+    command: celery -A workers.celery_app worker --loglevel=info --queues=video --concurrency=1 --hostname=worker-video@%h
+    environment:
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - RABBITMQ_URL=${RABBITMQ_URL:-amqp://admin:password@rabbitmq:5672/evergreen}
+      - DATABASE_URL=${DATABASE_URL}
+      - RUNWAY_API_KEY=${RUNWAY_API_KEY}
+      - PYTHONPATH=/app
+    depends_on:
+      - redis
+      - rabbitmq
+      - db
+    volumes:
+      - ./output:/app/output
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    networks:
+      - evergreen_network
+
+  # Celery worker for media assembly
+  worker_assembly:
+    build: .
+    container_name: evergreen_worker_assembly
+    command: celery -A workers.celery_app worker --loglevel=info --queues=assembly --concurrency=2 --hostname=worker-assembly@%h
+    environment:
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - RABBITMQ_URL=${RABBITMQ_URL:-amqp://admin:password@rabbitmq:5672/evergreen}
+      - DATABASE_URL=${DATABASE_URL}
+      - PYTHONPATH=/app
+    depends_on:
+      - redis
+      - rabbitmq
+      - db
+    volumes:
+      - ./output:/app/output
+    restart: unless-stopped
+    networks:
+      - evergreen_network
+
+  # Celery beat scheduler
+  celery_beat:
+    build: .
+    container_name: evergreen_celery_beat
+    command: celery -A workers.celery_app beat --loglevel=info
+    environment:
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - RABBITMQ_URL=${RABBITMQ_URL:-amqp://admin:password@rabbitmq:5672/evergreen}
+      - DATABASE_URL=${DATABASE_URL}
+      - PYTHONPATH=/app
+    depends_on:
+      - redis
+      - rabbitmq
+      - db
+    restart: unless-stopped
+    networks:
+      - evergreen_network
+
+  # Flower monitoring
+  flower:
+    build: .
+    container_name: evergreen_flower
+    command: celery -A workers.celery_app flower --port=5555 --broker=${RABBITMQ_URL:-amqp://admin:password@rabbitmq:5672/evergreen}
+    environment:
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - RABBITMQ_URL=${RABBITMQ_URL:-amqp://admin:password@rabbitmq:5672/evergreen}
+      - FLOWER_BASIC_AUTH=${FLOWER_BASIC_AUTH:-admin:password}
+      - PYTHONPATH=/app
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - rabbitmq
+    restart: unless-stopped
+    networks:
+      - evergreen_network
+
+volumes:
+  rabbitmq_data:
+
+networks:
+  evergreen_network:
+    external: true

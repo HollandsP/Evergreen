@@ -1,0 +1,89 @@
+version: '3.8'
+
+# Development overrides - automatically loaded by docker-compose
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder  # Use builder stage for development
+    environment:
+      - APP_ENV=development
+      - DEBUG=true
+      - RELOAD=true
+    volumes:
+      # Mount source code for hot reloading
+      - ./src:/app/src
+      - ./api:/app/api
+      - ./workers:/app/workers
+      - ./templates:/app/templates
+      - ./stories:/app/stories
+      - ./config:/app/config
+      - ./scripts:/app/scripts
+      - ./tests:/app/tests
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+      - "8001:8001"  # Debug port
+
+  worker:
+    environment:
+      - APP_ENV=development
+      - DEBUG=true
+      - CELERY_TASK_ALWAYS_EAGER=false
+      - CELERY_TASK_EAGER_PROPAGATES=true
+    volumes:
+      # Mount source code for development
+      - ./src:/app/src
+      - ./workers:/app/workers
+      - ./templates:/app/templates
+      - ./config:/app/config
+    command: celery -A workers.celery_app worker --loglevel=debug --concurrency=2
+    deploy:
+      replicas: 1  # Single worker for development
+
+  flower:
+    environment:
+      - FLOWER_DEBUG=true
+    ports:
+      - "5555:5555"
+    # No authentication in development
+    command: celery -A workers.celery_app flower --port=5555
+
+  db:
+    ports:
+      - "5432:5432"  # Expose for local development tools
+    environment:
+      - POSTGRES_PASSWORD=pipeline  # Simple password for dev
+
+  redis:
+    ports:
+      - "6379:6379"  # Expose for local development tools
+    command: redis-server --loglevel debug
+
+  # Development-only services
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: evergreen-mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - evergreen-network
+    profiles:
+      - dev-tools
+
+  adminer:
+    image: adminer:latest
+    container_name: evergreen-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=db
+    depends_on:
+      - db
+    networks:
+      - evergreen-network
+    profiles:
+      - dev-tools

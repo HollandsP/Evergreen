@@ -1,0 +1,146 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Testing
+.coverage
+.pytest_cache/
+.tox/
+htmlcov/
+.hypothesis/
+test-results/
+coverage.xml
+*.cover
+.coverage.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.log
+
+# Project specific
+.env
+.env.*
+!.env.example
+*.log
+logs/
+tmp/
+temp/
+cache/
+*.tmp
+*.temp
+output/exports/*
+output/projects/*
+output/temp/*
+!output/.gitkeep
+!output/exports/.gitkeep
+!output/projects/.gitkeep
+!output/temp/.gitkeep
+
+# Documentation
+docs/_build/
+site/
+mkdocs.yml
+
+# Terraform
+terraform/
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Kubernetes
+k8s/secrets/
+*.secret.yaml
+
+# Development
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Jupyter
+.ipynb_checkpoints
+*.ipynb
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Backups
+*.bak
+*.backup
+*~
+
+# Media files (large)
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.mp3
+*.wav
+*.flac

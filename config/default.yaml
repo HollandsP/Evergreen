@@ -1,0 +1,45 @@
+# Default configuration for AI Content Pipeline
+app:
+  name: "AI Content Pipeline"
+  version: "1.0.0"
+  environment: "development"
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  cors_origins: ["http://localhost:3000"]
+
+database:
+  url: "postgresql://user:pass@localhost:5432/pipeline"
+  pool_size: 20
+
+redis:
+  url: "redis://localhost:6379"
+  db: 0
+
+voice:
+  default_provider: "elevenlabs"
+  providers:
+    elevenlabs:
+      api_key: "${ELEVENLABS_API_KEY}"
+      rate_limit: 100
+    google_tts:
+      credentials_path: "${GOOGLE_APPLICATION_CREDENTIALS}"
+
+visual:
+  default_provider: "runway"
+  providers:
+    runway:
+      api_key: "${RUNWAY_API_KEY}"
+      timeout: 300
+    pika:
+      api_key: "${PIKA_API_KEY}"
+
+storage:
+  type: "s3"
+  bucket: "content-pipeline-media"
+  region: "us-east-1"
+
+queue:
+  broker_url: "redis://localhost:6379/0"
+  result_backend: "redis://localhost:6379/1"

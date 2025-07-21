@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:14-alpine
+    container_name: evergreen-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=pipeline
+      - POSTGRES_USER=pipeline
+      - POSTGRES_PASSWORD=pipeline
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pipeline -d pipeline"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    container_name: evergreen-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: evergreen-pipeline:latest
+    container_name: evergreen-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql://pipeline:pipeline@db:5432/pipeline
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      - RUNWAY_API_KEY=${RUNWAY_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - S3_BUCKET=${S3_BUCKET:-content-pipeline-media}
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./output:/app/output
+      - ./scripts:/app/scripts:ro
+
+  # Single Celery Worker (no replicas)
+  worker:
+    image: evergreen-pipeline:latest
+    container_name: evergreen-worker
+    restart: unless-stopped
+    command: celery -A workers.celery_app worker --loglevel=info --concurrency=4
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql://pipeline:pipeline@db:5432/pipeline
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      - RUNWAY_API_KEY=${RUNWAY_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - S3_BUCKET=${S3_BUCKET:-content-pipeline-media}
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./output:/app/output
+
+  # Flower - Celery Monitoring
+  flower:
+    image: evergreen-pipeline:latest
+    container_name: evergreen-flower
+    restart: unless-stopped
+    command: celery -A workers.celery_app flower --port=5555 --basic-auth=admin:admin
+    ports:
+      - "5556:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    depends_on:
+      - redis
+
+volumes:
+  postgres_data:
+  redis_data:

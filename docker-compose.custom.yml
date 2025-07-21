@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  db:
+    ports:
+      - "5433:5432"  # Use 5433 externally, 5432 internally
+  
+  redis:
+    ports:
+      - "6380:6379"  # Use 6380 externally, 6379 internally
+  
+  flower:
+    ports:
+      - "5556:5555"  # Use 5556 externally, 5555 internally
