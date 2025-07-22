@@ -53,6 +53,21 @@ temp/
 # Secrets
 *.pem
 *.key
+
+# Security: Credential Files (NEVER commit these)
+.git-credentials
+.env.local
+.env.production
+*credentials*
+*auth*
+*token*
+*.pem
+*.p12
+*.pfx
+*secret*
+*password*
+api_keys.json
+config/secrets.yml
 secrets/
 
 # Node.js (for web frontend)
