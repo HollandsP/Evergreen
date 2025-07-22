@@ -719,6 +719,81 @@ Implemented complete web UI redesign with audio-first production pipeline using 
 
 ---
 
+## 2025-01-22 - Claude (Anthropic) - Session 12 (Repository Cleanup)
+
+### Summary
+Comprehensive repository cleanup and organization. Moved all test files to proper test directories, organized scripts into subdirectories, consolidated documentation, cleaned up Docker compose files, and removed temporary/duplicate files from root directory. The repository is now well-organized and maintainable.
+
+### Files Modified
+- `.gitignore` - Enhanced with Node.js, build artifacts, and backup file patterns
+- `AGENT_WORK_LOG.md` - Moved back to root directory as requested and updated
+- **28 test files** - Moved from root to organized test structure:
+  - `tests/unit/` - 4 unit test files
+  - `tests/integration/` - 12 integration test files  
+  - `tests/e2e/` - 8 end-to-end test files
+  - `tests/experimental/` - 4 experimental test files
+- **22 script files** - Organized into `scripts/` subdirectories:
+  - `scripts/generation/` - 4 generation scripts
+  - `scripts/experimental/` - 8 experimental scripts
+  - `scripts/fixes/` - 3 fix scripts
+  - `scripts/startup/` - 6 startup scripts
+  - `scripts/utilities/` - 4 utility scripts
+- **19 documentation files** - Organized into `docs/` subdirectories:
+  - `docs/setup/` - 4 setup guides
+  - `docs/development/` - 5 development docs (excluding AGENT_WORK_LOG.md)
+  - `docs/design/` - 4 design documents
+  - `docs/runway/` - 7 runway-specific docs (including API key files)
+- **6 Docker compose files** - Consolidated and organized:
+  - Root: `docker-compose.yml`, `docker-compose.override.yml` (main configs)
+  - `docker/production/` - Production overrides
+  - `docker/alternative/` - RabbitMQ-based Celery architecture
+  - `docker/development/` - Simple and custom development configs
+
+### Features Implemented
+- ✅ **Proper Test Organization**: All test files categorized by type and moved to appropriate directories
+- ✅ **Script Organization**: All scripts organized by purpose into logical subdirectories
+- ✅ **Documentation Structure**: Clean documentation hierarchy with topical organization
+- ✅ **Docker Consolidation**: Reduced root clutter while maintaining all functionality
+- ✅ **Asset Management**: Moved sample images and test outputs to appropriate locations
+- ✅ **Cleanup Operations**: Removed temporary files and empty directories
+- ✅ **ai-content-pipeline Integration**: Removed as separate git submodule, integrated as subfolder structure
+
+### Tests Added
+- No new tests added - focused on organizing existing test files into proper structure
+- All 28 existing test files preserved and categorized appropriately
+
+### Issues Encountered & Resolved
+1. **ai-content-pipeline Directory**: Removed as requested (user wanted it as subfolder, not submodule)
+2. **Temporary Files**: Removed `scripts/~$riptLog0002TheDescent.txt` and other backup files
+3. **Mixed File Types**: Separated API docs, test files, scripts, and documentation into proper locations
+4. **Docker File Clutter**: Consolidated while preserving all deployment options
+5. **Asset Organization**: Moved sample images to `assets/examples/` and test outputs to `output/temp/`
+
+### Root Directory Final State
+Clean and organized with only essential files:
+- **Configuration**: `CLAUDE.md`, `README.md`, `Dockerfile`, `Makefile`, `requirements.txt`, `.gitignore`
+- **Docker**: `docker-compose.yml`, `docker-compose.override.yml`
+- **Core Directories**: `api/`, `src/`, `workers/`, `web/`, `docs/`, `tests/`, `scripts/`, `assets/`, `output/`
+
+### Next Steps
+- Repository is fully organized and ready for development
+- All test files are properly categorized for easy test suite execution
+- Documentation is logically organized for easy navigation
+- Docker configurations support all deployment scenarios
+- Consider adding README files to each subdirectory for navigation guidance
+
+### Recommendations for Next Agent
+- Repository structure is now optimal for development and maintenance
+- All files are in logical locations with clear separation of concerns
+- Test execution is now organized by type: `pytest tests/unit/`, `pytest tests/integration/`, etc.
+- Documentation is easy to find with topical organization
+- The cleanup has made the project much more professional and maintainable
+
+### Time Spent
+- Estimated time: 2 hours (analysis, organization, and systematic file movement)
+
+---
+
 ## Template for Next Agent Entry
 
 ```markdown

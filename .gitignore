@@ -54,3 +54,40 @@ temp/
 *.pem
 *.key
 secrets/
+
+# Node.js (for web frontend)
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Package manager
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts
+dist/
+build/
+*.map
+
+# Database
+*.db
+*.sqlite
+
+# Docker
+.dockerignore
+
+# Test outputs
+test-results/
+screenshots/
+videos/
+
+# Generated content (keep some output for demos)
+!output/README.md
+!output/examples/
+
+# Backup files
+*.bak
+*~
+.#*
