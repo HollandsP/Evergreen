@@ -1,255 +1,256 @@
-# Evergreen AI Content Generation Pipeline
+# 🎬 Evergreen - AI-Powered YouTube Video Studio
 
-Transform written stories into cinematic YouTube videos using AI-powered automation with a modern web interface and production pipeline.
+> Transform scripts into professional YouTube videos with AI-powered storyboarding, generation, and editing.
 
-## 🎬 Overview
+![Evergreen Studio](./docs/images/evergreen-banner.png)
 
-The AI Content Generation Pipeline automates the creation of professional-quality YouTube videos for AI-apocalypse narratives. Starting with "LOG_0002: THE DESCENT" from the "AI 2027: Race" universe, this system enables rapid, modular production of dystopian video content.
+## 🌟 Overview
 
-### Key Features
-- 🎬 **Web Production Interface**: Complete 5-stage audio-first production pipeline
-- 📝 **Script Processing**: Upload and parse "The Descent" with auto-prompt generation
-- 🎙️ **AI Voice Synthesis**: ElevenLabs integration with Winston character voices
-- 🖼️ **Image Generation**: DALL-E 3 integration for scene visualization
-- 🎥 **Video Generation**: RunwayML Gen-4 Turbo with lip-sync and audio synchronization
-- 💻 **Terminal UI Effects**: Cinematic terminal animations with multiple themes
-- 🎬 **Smart Assembly**: Timeline editing, transitions, and professional video export
+Evergreen is a revolutionary video production platform that combines AI with intuitive visual tools to create YouTube content. From scripts to final videos, Evergreen handles the entire production pipeline with a unique **storyboard-first approach**.
+
+### ✨ Key Features
+
+- **📋 Visual Storyboarding** - Plan your entire video with sketches, AI suggestions, or uploaded references
+- **🤖 AI Scene Division** - Automatically break scripts into optimized scenes
+- **🎨 Flexible Image Creation** - Upload your own or generate with DALL-E 3
+- **🎙️ Voice Synthesis** - Natural voices with ElevenLabs integration
+- **🎬 Video Generation** - RunwayML Gen-4 Turbo for image-to-video magic
+- **✂️ AI Video Editor** - Chat-based editing with natural language commands
+- **📤 Direct Publishing** - Export locally or upload directly to YouTube
+- **🌙 Dark Mode UI** - Professional interface designed for creators
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.9+
-- Node.js 18+ (for web interface)
-- FFmpeg 4.0+
-- Docker & Docker Compose
-- 16GB RAM (minimum)
-- API Keys: ElevenLabs, OpenAI (DALL-E 3), RunwayML
+
+- Node.js 18+ and npm/yarn
+- Python 3.9+ (for AI services)
+- PostgreSQL 14+
+- Redis 6+
+- FFmpeg installed
+- API Keys (see Environment Setup)
 
 ### Installation
 
-1. **Clone the repository**
 ```bash
-git clone https://github.com/HollandsP/ai-content-pipeline.git
-cd Evergreen
-```
+# Clone the repository
+git clone https://github.com/yourusername/evergreen.git
+cd evergreen
 
-2. **Set up environment variables**
-```bash
-# API keys are already configured in project environment
-# Includes: ELEVENLABS_API_KEY, OPENAI_API_KEY, RUNWAY_API_KEY
-```
-
-3. **Quick Start with Web Interface**
-```bash
-# Start the web interface
-cd web
+# Install dependencies
 npm install
+cd web && npm install
+cd ../api && pip install -r requirements.txt
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your API keys
+
+# Initialize database
+npm run db:init
+
+# Start development servers
 npm run dev
-
-# Open browser to: http://localhost:3000/production
 ```
 
-4. **Alternative: Docker Setup**
-```bash
-# Start all services with Docker
-docker-compose up -d
+### Environment Variables
 
-# Access web interface at: http://localhost:3000
-# API documentation at: http://localhost:8000/docs
+```env
+# Required API Keys
+OPENAI_API_KEY=your_openai_key
+ELEVENLABS_API_KEY=your_elevenlabs_key
+RUNWAY_API_KEY=your_runway_key
+
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/evergreen
+REDIS_URL=redis://localhost:6379
+
+# Optional
+YOUTUBE_API_KEY=your_youtube_key
+AWS_ACCESS_KEY_ID=your_aws_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret
 ```
+
+## 📐 Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                  Storyboard (Always Visible)             │
+├─────────────────────────────────────────────────────────┤
+│ Script → Images → Audio → Video → Edit → Export         │
+├─────────────────────────────────────────────────────────┤
+│                   Production Workspace                   │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Tech Stack
+
+- **Frontend**: Next.js 14, TypeScript, Tailwind CSS
+- **Backend**: FastAPI (Python), Node.js APIs
+- **AI/ML**: OpenAI GPT-4, DALL-E 3, RunwayML, ElevenLabs
+- **Database**: PostgreSQL, Redis
+- **Media**: FFmpeg, MoviePy, Sharp
+- **Real-time**: WebSockets, Server-Sent Events
 
 ## 📁 Project Structure
 
 ```
-Evergreen/
-├── web/                   # Next.js production interface
-│   ├── components/        # React components for 5-stage workflow
-│   ├── pages/production/  # Stage-specific pages
-│   └── lib/              # WebSocket, API, and state management
-├── api/                   # FastAPI backend
-│   └── routes/           # Script, audio, image, video, assembly endpoints
-├── src/                   # Core Python services
-│   ├── script_engine/    # Script parsing and processing
-│   ├── services/         # ElevenLabs, DALL-E 3, RunwayML clients
-│   ├── terminal_sim/     # Terminal UI animation system
-│   └── prompts/          # 600+ optimized generation prompts
-├── workers/              # Celery background processing
-├── scripts/              # Generation and utility scripts
-│   ├── generation/       # Video generation scripts
-│   ├── startup/          # Service startup scripts
-│   └── utilities/        # Maintenance and testing tools
-├── tests/                # Organized test suites
-│   ├── unit/             # Unit tests
-│   ├── integration/      # Service integration tests
-│   ├── e2e/             # End-to-end pipeline tests
-│   └── experimental/     # Feature testing
-├── docs/                 # Comprehensive documentation
-│   ├── setup/           # Installation and setup guides
-│   ├── development/     # Development workflows
-│   ├── design/          # Architecture and design docs
-│   └── runway/          # RunwayML integration guides
-├── output/              # Generated media and final videos
-└── assets/              # Templates, styles, and static assets
+evergreen/
+├── web/                 # Next.js frontend
+│   ├── components/      # React components
+│   │   ├── storyboard/  # Storyboard UI components
+│   │   ├── stages/      # Production stage components
+│   │   └── editor/      # AI video editor interface
+│   ├── pages/          # Page routes
+│   └── styles/         # Tailwind styles
+├── api/                # Backend services
+│   ├── routes/         # API endpoints
+│   ├── services/       # Business logic
+│   └── models/         # Data models
+├── src/                # Python services
+│   ├── ai_editor/      # Video editing AI
+│   ├── scene_parser/   # Script analysis
+│   └── media_pipeline/ # Asset processing
+└── docs/              # Documentation
 ```
 
-## 🎯 Production Workflows
+## 🎯 Workflow
 
-### Web Interface Production Pipeline
+### 1. Script Upload & Storyboarding
+Upload your script and watch as AI divides it into scenes. Create a visual storyboard using our sketch tool, AI generation, or uploaded references.
 
-**Audio-First 5-Stage Workflow:**
+### 2. Asset Generation
+- **Images**: Upload your own or generate with DALL-E 3
+- **Audio**: Create voiceovers with ElevenLabs
+- **Music**: Upload background tracks
 
-1. **Script Processing** (`/production/script`)
-   - Upload "The Descent" script file
-   - Automatic parsing into 8 scenes with timestamps
-   - Auto-generated prompts for each scene
-   - Narration extraction for Winston character
+### 3. Video Creation
+Convert static images to dynamic videos using RunwayML's Gen-4 Turbo with customizable motion prompts.
 
-2. **Audio Generation** (`/production/audio`)
-   - ElevenLabs voice synthesis
-   - Winston character voice selection
-   - Batch audio generation for all scenes
-   - Audio timing for lip-sync preparation
+### 4. AI Editing
+Use natural language to edit your video:
+- "Cut the first 3 seconds"
+- "Add fade transitions between scenes"
+- "Sync to the beat of the music"
 
-3. **Image Generation** (`/production/images`)
-   - DALL-E 3 integration (cost: ~$0.32 for 8 images)
-   - Pre-filled, editable prompts from script analysis
-   - High-resolution scene visualization
-   - Custom image upload option
+### 5. Export & Publish
+Export in multiple formats or publish directly to YouTube with AI-generated metadata.
 
-4. **Video Generation** (`/production/videos`)
-   - RunwayML Gen-4 Turbo video creation
-   - Audio-synchronized video generation
-   - Lip-sync enabled for dialogue scenes
-   - Camera movement and motion controls
+## 💡 Usage Examples
 
-5. **Final Assembly** (`/production/assembly`)
-   - Timeline editor with all media assets
-   - Transition effects and scene ordering
-   - Background music integration
-   - Professional video export
+### Creating a YouTube Short
 
-### Direct Script Usage
+```typescript
+// 1. Upload script
+const script = `
+Scene 1: Opening hook - "Did you know..."
+Scene 2: Main point with visual
+Scene 3: Call to action
+`;
+
+// 2. AI divides into scenes and suggests storyboard
+// 3. Generate or upload images
+// 4. Create voiceover
+// 5. Generate 5-second video clips
+// 6. AI edits for optimal pacing
+// 7. Export as YouTube Short
+```
+
+### Long-Form Content
+
+Perfect for:
+- Educational videos
+- Story narrations  
+- Product demonstrations
+- Tutorial content
+
+## 🛠️ Development
+
+### Project Structure
+
+```
+evergreen/
+├── web/                 # Next.js frontend
+│   ├── components/      # React components
+│   ├── pages/          # Page routes
+│   └── styles/         # Tailwind styles
+├── api/                # Backend services
+│   ├── routes/         # API endpoints
+│   ├── services/       # Business logic
+│   └── models/         # Data models
+├── src/                # Python services
+│   ├── ai_editor/      # Video editing AI
+│   ├── scene_parser/   # Script analysis
+│   └── media_pipeline/ # Asset processing
+└── docs/              # Documentation
+```
+
+### Running Tests
+
 ```bash
-# Generate complete video using scripts
-python scripts/generation/generate_log_0002_video.py
+# Frontend tests
+cd web && npm test
 
-# Test individual components
-python tests/integration/test_complete_pipeline.py
+# Backend tests
+cd api && pytest
 
-# Quick API test
-python scripts/experimental/quick_api_test.py
+# E2E tests
+npm run test:e2e
 ```
 
-### API Integration
-```python
-import requests
+### Building for Production
 
-# Upload and parse script
-response = requests.post('http://localhost:8000/api/v1/script/parse', 
-    files={'file': open('scripts/ScriptLog0002TheDescent.txt', 'rb')})
-scenes = response.json()['scenes']
+```bash
+# Build all services
+npm run build
 
-# Generate audio for all scenes
-response = requests.post('http://localhost:8000/api/v1/audio/batch',
-    json={'scenes': scenes, 'voice': 'winston_calm'})
+# Docker deployment
+docker-compose up -d
 
-# Track progress via WebSocket
-# ws://localhost:8000/ws for real-time updates
+# Deploy to cloud
+npm run deploy
 ```
 
-## 🛠️ Configuration
+## 🤝 Contributing
 
-### Voice Configuration
-ElevenLabs voices are pre-configured for "The Descent" characters:
-```python
-# Available voices in web interface
-VOICES = {
-    'winston_calm': 'Calm, authoritative narrator',
-    'winston_urgent': 'Urgent, concerned tone',
-    'system_voice': 'Synthetic, robotic announcements'
-}
-```
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-### Production Settings
-Customize production pipeline in web interface:
-```typescript
-// Audio settings
-const audioSettings = {
-  voice: 'winston_calm',
-  stability: 0.7,
-  similarityBoost: 0.8,
-  style: 'narrative'
-};
+### Development Workflow
 
-// Video settings  
-const videoSettings = {
-  provider: 'runway',
-  model: 'gen4-turbo',
-  duration: 'auto', // Based on audio length
-  lipSync: true,    // Auto-enabled for dialogue
-  cameraMovement: 'subtle',
-  motionIntensity: 0.7
-};
-```
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-### Prompt Templates
-Extensive prompt library in `src/prompts/dalle3_runway_prompts.py`:
-```python
-# 600+ optimized prompts for different scene types
-SCENE_TEMPLATES = {
-    'rooftop_dystopian': {
-        'dalle_prompt': 'Dystopian Berlin rooftop at sunset, white-clad figures...',
-        'runway_prompt': 'Slow camera movement across rooftop scene...',
-        'style_modifiers': ['cinematic', 'high contrast', 'moody lighting']
-    }
-}
-```
+## 📊 Roadmap
 
-## 🔧 Advanced Features
+- [x] Storyboard-first UI design
+- [x] Script parsing and scene division
+- [x] Image generation/upload
+- [x] Voice synthesis integration
+- [x] RunwayML video generation
+- [ ] AI video editor (in progress)
+- [ ] YouTube direct upload
+- [ ] Collaborative features
+- [ ] Mobile app
+- [ ] Plugin system
 
-### Terminal UI Animations
-```python
-from src.terminal_sim.advanced_effects import TerminalRenderer
+## 💰 Pricing Estimates
 
-# Create cinematic terminal animations
-renderer = TerminalRenderer(theme='matrix')
-renderer.add_typing_effect(
-    text="SYSTEM FAILURE IMMINENT",
-    speed=50,  # ms per character
-    cursor_blink=True
-)
-video = renderer.export_video(duration=5, fps=30)
-```
+Per video costs (approximate):
+- **Script Analysis**: ~$0.10
+- **Image Generation**: ~$0.50/scene
+- **Voice Synthesis**: ~$0.10/scene  
+- **Video Generation**: ~$0.50/scene
+- **Total**: ~$5-10 per complete video
 
-### Custom Video Assembly
-```python
-from workers.tasks.video_generation import VideoComposer
+## 🔒 Security
 
-# Advanced video composition
-composer = VideoComposer()
-timeline = composer.build_timeline([
-    {'type': 'audio', 'file': 'scene_1.mp3', 'start': 0},
-    {'type': 'visual', 'file': 'scene_1.mp4', 'start': 0},
-    {'type': 'terminal', 'file': 'ui_1.mp4', 'start': 0, 'overlay': True}
-])
-final_video = composer.assemble(timeline, transitions=['crossfade'])
-```
-
-### Production State Management
-```typescript
-// Web interface state persistence
-import { productionState } from '@/lib/production-state';
-
-// Save progress across sessions
-productionState.updateStage('audio', {
-  status: 'completed',
-  generatedAudio: audioFiles,
-  totalDuration: 85.2
-});
-
-// Resume from any stage
-const currentStage = productionState.getCurrentStage();
-```
+- All API keys stored securely
+- User content encrypted at rest
+- Secure media upload/download
+- Rate limiting on all endpoints
 
 ## 📊 Performance & Analytics
 
@@ -328,25 +329,6 @@ docker-compose logs api
 docker-compose logs worker
 ```
 
-## 🤝 Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
-
-### Development Setup
-```bash
-# Python backend development
-pip install -r requirements-dev.txt
-pytest tests/unit/ tests/integration/
-flake8 src/ api/ workers/
-
-# Web frontend development
-cd web
-npm install
-npm run dev        # Start development server
-npm run type-check # TypeScript validation
-npm run lint       # ESLint validation
-npm test           # Jest test suite
-```
 
 ## 📄 API Documentation
 
@@ -354,35 +336,6 @@ Full API documentation available at:
 - [API Reference](docs/api/README.md)
 - [Integration Guide](docs/api/integration.md)
 
-### Production API Examples
-```bash
-# Start API server (included in docker-compose)
-uvicorn api.main:app --reload
-
-# Upload and parse "The Descent" script
-curl -X POST http://localhost:8000/api/v1/script/parse \
-  -F "file=@scripts/ScriptLog0002TheDescent.txt"
-
-# Generate audio for all scenes
-curl -X POST http://localhost:8000/api/v1/audio/batch \
-  -H "Content-Type: application/json" \
-  -d '{
-    "scenes": [...],
-    "voice": "winston_calm",
-    "settings": {"stability": 0.7}
-  }'
-
-# Generate images with DALL-E 3
-curl -X POST http://localhost:8000/api/v1/images/batch \
-  -H "Content-Type: application/json" \
-  -d '{
-    "scenes": [...],
-    "provider": "dalle3"
-  }'
-
-# WebSocket connection for real-time updates
-# ws://localhost:8000/ws
-```
 
 ## 🚀 Deployment
 
@@ -429,30 +382,24 @@ docker-compose -f docker/alternative/docker-compose.celery.yml up -d
 - Batch Processing: Multi-scene generation endpoints
 - State Management: Production workflow persistence
 
-## 📝 License
+## 📄 License
 
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- **ElevenLabs** for realistic voice synthesis
-- **OpenAI** for DALL-E 3 image generation
-- **RunwayML** for Gen-4 Turbo video generation
-- **Next.js & React** for the modern web interface
-- **FastAPI & Celery** for robust backend processing
-- The **"AI 2027: Race"** creative universe
+- OpenAI for GPT-4 and DALL-E 3
+- RunwayML for Gen-4 Turbo
+- ElevenLabs for voice synthesis
+- The open-source community
+
+## 📞 Support
+
+- **Documentation**: [docs.evergreen.ai](https://docs.evergreen.ai)
+- **Discord**: [Join our community](https://discord.gg/evergreen)
+- **Email**: support@evergreen.ai
+- **Issues**: [GitHub Issues](https://github.com/yourusername/evergreen/issues)
 
 ---
 
-## 🎬 Ready to Create?
-
-**Quick Start:**
-1. `cd web && npm install && npm run dev`
-2. Open http://localhost:3000/production
-3. Upload "The Descent" script and start creating!
-
-**Expected Output:** Complete 85-second dystopian thriller video with professional voice narration, cinematic visuals, and terminal UI effects.
-
-**Cost per video:** ~$4.62 | **Generation time:** ~5-10 minutes
-
-For questions or support, please check the [Agent Work Log](AGENT_WORK_LOG.md) or open an issue.
+Built with ❤️ by creators, for creators.
