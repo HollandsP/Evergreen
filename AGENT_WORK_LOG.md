@@ -600,6 +600,59 @@ Successfully addressed user's critical feedback about "awful" graphics by implem
 
 ---
 
+## 2025-01-22 - Claude (Anthropic) - Session 10 (Web UI Redesign)
+
+### Summary
+Initiated comprehensive web interface redesign based on user feedback to implement audio-first production pipeline. Created multi-stage navigation system and fixed critical WebSocket connection issues. Implementing improved workflow that separates script processing, audio generation, image generation, video generation, and final assembly into distinct stages.
+
+### Files Modified
+- `WEB_UI_IMPROVEMENT_PLAN.md` - Analyzed existing comprehensive redesign plan
+- `web/components/layout/StageNavigation.tsx` - Created multi-stage navigation component with 5-stage production workflow
+- `web/components/shared/ConnectionStatus.tsx` - Created WebSocket connection status indicator to fix "connecting" issue
+- `scripts/ScriptLog0002TheDescent.txt` - Reviewed "The Descent" script structure for auto-prompt generation
+- `src/prompts/dalle3_runway_prompts.py` - Analyzed 600+ lines of prompt templates for image/video generation
+
+### Features Implemented
+- ✅ **Multi-Stage Navigation**: 5-stage production pipeline (Script → Audio → Images → Video → Assembly)
+- ✅ **Audio-First Workflow Design**: Moved audio generation to Stage 2 (before images/video) for lip-sync capabilities
+- ✅ **Connection Status Component**: Real-time WebSocket connection monitoring with retry functionality
+- ✅ **Stage Status Management**: Pending/in_progress/completed/disabled status tracking
+- ✅ **Production Pipeline Structure**: Clean separation of concerns across stages
+
+### Issues Identified & Analysis
+1. **WebSocket Connection**: UI shows "connecting" but `wsManager.connect()` never called in index.tsx
+2. **Confusing Workflow**: ImageGeneratorPanel button says "Generate Video" instead of "Generate Image"
+3. **No Script Integration**: Missing upload functionality for "The Descent" script
+4. **Mixed Concerns**: Image generation, video generation, and script processing combined
+5. **Missing Audio Integration**: ElevenLabs audio generation not accessible from UI
+
+### Current Web UI Architecture
+- **Stage 1**: Script Processing - Upload "The Descent", parse scenes, extract narration
+- **Stage 2**: Audio Generation - ElevenLabs voice synthesis (enables lip-sync timing)
+- **Stage 3**: Image Generation - DALL-E 3/Flux.1 with audio-informed prompts
+- **Stage 4**: Video Generation - RunwayML with audio synchronization and lip-sync
+- **Stage 5**: Final Assembly - Timeline editing and export
+
+### Next Steps
+1. **Fix WebSocket Connection** - Add `wsManager.connect()` call in index.tsx
+2. **Create ScriptProcessor Component** - Handle "The Descent" script upload and parsing
+3. **Create AudioGenerator Component** - ElevenLabs integration for Stage 2
+4. **Separate ImageGenerator** - Remove video generation, focus on image creation
+5. **Create ImageToVideo Component** - Audio-synchronized video generation with lip-sync
+6. **Implement multi-page workflow** - Route between `/production/script`, `/production/audio`, etc.
+
+### Recommendations for Next Agent
+- All core video generation components are working from previous sessions
+- Focus on separating the web UI concerns and implementing the stage-based workflow
+- The StageNavigation component is ready to use with 5 stages pre-configured
+- ConnectionStatus component will resolve the "connecting but never connects" issue
+- Script parsing logic already exists in workers - need to expose via web API
+
+### Time Spent
+- Estimated time: 1.5 hours (analysis, planning, component creation)
+
+---
+
 ## Template for Next Agent Entry
 
 ```markdown

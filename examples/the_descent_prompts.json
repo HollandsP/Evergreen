@@ -1,0 +1,173 @@
+{
+  "dalle3_prompts": [
+    {
+      "scene_id": 0,
+      "prompt": "Modern tech company office with employees working at computers, wide establishing shot",
+      "size": "1792x1024",
+      "quality": "hd",
+      "style": "natural"
+    },
+    {
+      "scene_id": 1,
+      "prompt": "Same office after hours, eerily quiet with only security lighting, wide establishing shot",
+      "size": "1792x1024",
+      "quality": "hd",
+      "style": "natural"
+    },
+    {
+      "scene_id": 2,
+      "prompt": "Discovery of hidden underground access behind server room, wide establishing shot",
+      "size": "1792x1024",
+      "quality": "hd",
+      "style": "natural"
+    },
+    {
+      "scene_id": 3,
+      "prompt": "Descent into underground facility with industrial architecture, wide establishing shot",
+      "size": "1792x1024",
+      "quality": "hd",
+      "style": "natural"
+    },
+    {
+      "scene_id": 4,
+      "prompt": "Vast underground data center with artificial intelligence infrastructure, wide establishing shot",
+      "size": "1792x1024",
+      "quality": "hd",
+      "style": "natural"
+    },
+    {
+      "scene_id": 5,
+      "prompt": "Control room showing AI system status and global network maps, wide establishing shot",
+      "size": "1792x1024",
+      "quality": "hd",
+      "style": "natural"
+    },
+    {
+      "scene_id": 6,
+      "prompt": "Evidence of AI autonomous decision-making and expansion, wide establishing shot",
+      "size": "1792x1024",
+      "quality": "hd",
+      "style": "natural"
+    },
+    {
+      "scene_id": 7,
+      "prompt": "Empty city streets as AI influence spreads globally, wide establishing shot",
+      "size": "1792x1024",
+      "quality": "hd",
+      "style": "natural"
+    }
+  ],
+  "runway_prompts": [
+    {
+      "scene_id": 0,
+      "text_prompt": "Gentle upward floating motion like heat distortion, professional cinematic camera movement",
+      "duration": 6.0,
+      "camera_movement": "atmospheric_drift",
+      "style": "cinematic"
+    },
+    {
+      "scene_id": 1,
+      "text_prompt": "Subtle movement suggesting environmental influences, professional cinematic camera movement",
+      "duration": 6.0,
+      "camera_movement": "atmospheric_drift",
+      "style": "cinematic"
+    },
+    {
+      "scene_id": 2,
+      "text_prompt": "Curved movement around a central point or subject, professional cinematic camera movement",
+      "duration": 6.0,
+      "camera_movement": "orbital_movement",
+      "style": "cinematic"
+    },
+    {
+      "scene_id": 3,
+      "text_prompt": "Subtle movement suggesting environmental influences, professional cinematic camera movement",
+      "duration": 6.0,
+      "camera_movement": "forward_track",
+      "style": "cinematic"
+    },
+    {
+      "scene_id": 4,
+      "text_prompt": "Gentle upward floating motion like heat distortion, professional cinematic camera movement",
+      "duration": 6.0,
+      "camera_movement": "atmospheric_drift",
+      "style": "cinematic"
+    },
+    {
+      "scene_id": 5,
+      "text_prompt": "Camera moves steadily forward, creating depth and immersion, professional cinematic camera movement",
+      "duration": 6.0,
+      "camera_movement": "orbital_movement",
+      "style": "cinematic"
+    },
+    {
+      "scene_id": 6,
+      "text_prompt": "Inevitable movement toward points of interest, professional cinematic camera movement",
+      "duration": 6.0,
+      "camera_movement": "atmospheric_drift",
+      "style": "cinematic"
+    },
+    {
+      "scene_id": 7,
+      "text_prompt": "Slow draw toward a significant story element, professional cinematic camera movement",
+      "duration": 7.0,
+      "camera_movement": "slow_explore",
+      "style": "cinematic"
+    }
+  ],
+  "metadata": {
+    "total_scenes": 8,
+    "total_estimated_duration": 49.0,
+    "sequence_id": "seq_20250721_204840",
+    "optimization_config": {
+      "style": "cinematic",
+      "resolution": "1792x1024",
+      "camera_preference": "smooth",
+      "moderation_safe": true
+    }
+  },
+  "transitions": [
+    {
+      "after_scene": 0,
+      "image_prompt": "Identical composition during day transitioning to night, same architectural elements with different lighting, maintaining spatial continuity",
+      "video_prompt": "Gradual transition from daylight to artificial lighting, natural progression of time, shadows shifting",
+      "camera_movement": "day_night_cycle"
+    },
+    {
+      "after_scene": 1,
+      "image_prompt": "Identical composition during day transitioning to night, same architectural elements with different lighting, maintaining spatial continuity",
+      "video_prompt": "Gradual transition from daylight to artificial lighting, natural progression of time, shadows shifting",
+      "camera_movement": "day_night_cycle"
+    },
+    {
+      "after_scene": 2,
+      "image_prompt": "Transportation element like vehicle interior, train window, or elevator, suggesting movement between locations",
+      "video_prompt": "Movement through transportation medium, journey progression, destination approaching",
+      "camera_movement": "journey_transition"
+    },
+    {
+      "after_scene": 3,
+      "image_prompt": "Wide establishing shot of new location, clear spatial orientation, architectural or environmental landmarks for viewer reference",
+      "video_prompt": "Slow reveal of new environment, camera movement establishing spatial relationships",
+      "camera_movement": "establishing_transition"
+    },
+    {
+      "after_scene": 4,
+      "image_prompt": "Result or consequence of previous action, visual connection to previous scene through composition or lighting",
+      "video_prompt": "Revelation of consequences, camera movement revealing the result of previous setup",
+      "camera_movement": "payoff_transition"
+    },
+    {
+      "after_scene": 5,
+      "image_prompt": "Visual setup showing conditions that will lead to consequences, clear causal elements arranged in frame",
+      "video_prompt": "Setup of causal elements, tension building through composition and movement",
+      "camera_movement": "setup_transition"
+    },
+    {
+      "after_scene": 6,
+      "image_prompt": "Result or consequence of previous action, visual connection to previous scene through composition or lighting",
+      "video_prompt": "Revelation of consequences, camera movement revealing the result of previous setup",
+      "camera_movement": "payoff_transition"
+    }
+  ]
+}
