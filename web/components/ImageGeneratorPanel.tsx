@@ -27,7 +27,7 @@ const ImageGeneratorPanel: React.FC<ImageGeneratorPanelProps> = ({
   onSettingsChange,
 }) => {
   const [prompt, setPrompt] = useState('');
-  const [selectedProvider, setSelectedProvider] = useState<'dalle3' | 'flux1'>('dalle3');
+  const [selectedProvider, setSelectedProvider] = useState<'dalle3'>('dalle3');
   const [showSettings, setShowSettings] = useState(false);
   const [promptError, setPromptError] = useState<string | null>(null);
 
@@ -102,7 +102,7 @@ const ImageGeneratorPanel: React.FC<ImageGeneratorPanelProps> = ({
             {availableProviders.map((provider) => (
               <button
                 key={provider.name}
-                onClick={() => setSelectedProvider(provider.name as 'dalle3' | 'flux1')}
+                onClick={() => setSelectedProvider(provider.name as 'dalle3')}
                 className={cn(
                   'p-4 text-left border rounded-lg transition-all duration-200',
                   selectedProvider === provider.name

@@ -8,7 +8,7 @@ import {
   FilmIcon,
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 
 export interface Stage {
   id: string;

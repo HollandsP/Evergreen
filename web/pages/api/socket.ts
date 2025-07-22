@@ -145,7 +145,6 @@ function simulateJobUpdates(io: SocketIOServer) {
     // Simulate system status updates
     const systemStatus = {
       dalle3Available: Math.random() > 0.1,
-      flux1Available: Math.random() > 0.1,
       runwayAvailable: Math.random() > 0.05,
       activeJobs: Math.floor(Math.random() * 5),
       queueLength: Math.floor(Math.random() * 10),

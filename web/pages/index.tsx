@@ -27,28 +27,21 @@ import { apiClient } from '@/lib/api';
 import { wsManager } from '@/lib/websocket';
 import { generateId, cn } from '@/lib/utils';
 
+// Note: Flux.1 support was removed due to high subscription costs
+// Only DALL-E 3 is available for image generation
 const DEFAULT_PROVIDERS: ProviderConfig[] = [
   {
     name: 'dalle3',
     displayName: 'DALL-E 3',
     description: 'OpenAI\'s most advanced image generation model',
-    cost: { image: 0.040, video: 0.095 },
+    cost: { 
+      image: 0.040,  // $0.040 for 1024x1024, $0.080 for 1792x1024
+      video: 0.095 
+    },
     capabilities: {
       maxImageSize: '1792x1024',
       maxVideoDuration: 10,
       qualityOptions: ['1024x1024', '1024x1792', '1792x1024']
-    },
-    available: true
-  },
-  {
-    name: 'flux1',
-    displayName: 'Flux.1',
-    description: 'High-performance open-source image generation',
-    cost: { image: 0.025, video: 0.095 },
-    capabilities: {
-      maxImageSize: '1024x1024',
-      maxVideoDuration: 10,
-      qualityOptions: ['512x512', '768x768', '1024x1024']
     },
     available: true
   }
@@ -56,7 +49,6 @@ const DEFAULT_PROVIDERS: ProviderConfig[] = [
 
 const DEFAULT_SYSTEM_STATUS: SystemStatus = {
   dalle3Available: true,
-  flux1Available: true,
   runwayAvailable: true,
   activeJobs: 0,
   queueLength: 0,
@@ -135,6 +127,9 @@ export default function Home() {
   };
 
   const setupWebSocketListeners = () => {
+    // Initialize WebSocket connection
+    wsManager.connect();
+    
     wsManager.subscribe('job_update', handleJobUpdate);
     wsManager.subscribe('step_update', handleStepUpdate);
     wsManager.subscribe('job_completed', handleJobCompleted);
@@ -415,7 +410,7 @@ export default function Home() {
                         <SparklesIcon className="h-8 w-8 text-primary-600 mb-2" />
                         <h3 className="font-medium text-gray-900">AI-Powered</h3>
                         <p className="text-gray-600 text-center">
-                          Uses DALL-E 3 and Flux.1 for stunning image generation
+                          Uses DALL-E 3 for stunning image generation
                         </p>
                       </div>
                       <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg">
@@ -457,7 +452,7 @@ export default function Home() {
                                 {job.status}
                               </span>
                               <span className="text-xs text-gray-500">
-                                {job.provider === 'dalle3' ? 'DALL-E 3' : 'Flux.1'}
+                                DALL-E 3
                               </span>
                               {job.cost && (
                                 <span className="text-xs text-gray-500">
@@ -486,7 +481,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="text-center">
               <p className="text-sm text-gray-500">
-                Powered by DALL-E 3, Flux.1, and RunwayML • Built with Next.js and TypeScript
+                Powered by DALL-E 3 and RunwayML • Built with Next.js and TypeScript
               </p>
             </div>
           </div>

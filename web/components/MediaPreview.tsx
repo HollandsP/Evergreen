@@ -281,7 +281,7 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({
             <div>
               <span className="text-gray-500">Provider:</span>
               <span className="ml-2 font-medium text-gray-900">
-                {job.provider === 'dalle3' ? 'DALL-E 3' : 'Flux.1'}
+                DALL-E 3
               </span>
             </div>
             <div>

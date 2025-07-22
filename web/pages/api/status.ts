@@ -26,7 +26,6 @@ export default async function handler(
         
         const status: SystemStatus = {
           dalle3Available: backendStatus.dalle3_available ?? true,
-          flux1Available: backendStatus.flux1_available ?? true,
           runwayAvailable: backendStatus.runway_available ?? true,
           activeJobs: backendStatus.active_jobs ?? 0,
           queueLength: backendStatus.queue_length ?? 0,
@@ -42,7 +41,6 @@ export default async function handler(
     // Fallback status for demo
     const fallbackStatus: SystemStatus = {
       dalle3Available: true,
-      flux1Available: true,
       runwayAvailable: true,
       activeJobs: 0,
       queueLength: 0,

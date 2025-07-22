@@ -41,7 +41,7 @@ const PipelineControls: React.FC<PipelineControlsProps> = ({
   const canRetry = currentJob && currentJob.status === 'failed';
 
   const getSystemStatusColor = () => {
-    if (!systemStatus.dalle3Available && !systemStatus.flux1Available) {
+    if (!systemStatus.dalle3Available) {
       return 'text-red-600 bg-red-100';
     }
     if (systemStatus.systemLoad > 0.8) {
@@ -51,8 +51,8 @@ const PipelineControls: React.FC<PipelineControlsProps> = ({
   };
 
   const getSystemStatusText = () => {
-    if (!systemStatus.dalle3Available && !systemStatus.flux1Available) {
-      return 'No providers available';
+    if (!systemStatus.dalle3Available) {
+      return 'DALL-E 3 not available';
     }
     if (systemStatus.systemLoad > 0.8) {
       return 'High system load';
@@ -270,9 +270,9 @@ const PipelineControls: React.FC<PipelineControlsProps> = ({
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Flux.1:</span>
-                  <span className={cn('font-medium', systemStatus.flux1Available ? 'text-green-600' : 'text-red-600')}>
-                    {systemStatus.flux1Available ? 'Available' : 'Offline'}
+                  <span className="text-gray-600 text-sm italic">Note:</span>
+                  <span className="text-gray-500 text-sm">
+                    Flux.1 removed (high subscription cost)
                   </span>
                 </div>
                 <div className="flex justify-between">
