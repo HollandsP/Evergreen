@@ -1,5 +1,5 @@
-import { ProductionState, ScriptScene, AudioData, ImageData } from '@/types'
-import { productionState } from '@/lib/production-state'
+import { ProductionState, ScriptScene, AudioData, ImageData } from '@/types';
+import { productionState } from '@/lib/production-state';
 
 // Mock data generators
 export const createMockScene = (id: string, overrides?: Partial<ScriptScene>): ScriptScene => ({
@@ -14,7 +14,7 @@ export const createMockScene = (id: string, overrides?: Partial<ScriptScene>): S
     visual: `Visual description for ${id}`,
   },
   ...overrides,
-})
+});
 
 export const createMockAudioData = (sceneId: string, overrides?: Partial<AudioData>): AudioData => ({
   sceneId,
@@ -22,7 +22,7 @@ export const createMockAudioData = (sceneId: string, overrides?: Partial<AudioDa
   duration: 5,
   status: 'completed',
   ...overrides,
-})
+});
 
 export const createMockImageData = (sceneId: string, overrides?: Partial<ImageData>): ImageData => ({
   sceneId,
@@ -31,41 +31,41 @@ export const createMockImageData = (sceneId: string, overrides?: Partial<ImageDa
   provider: 'dalle3',
   status: 'completed',
   ...overrides,
-})
+});
 
 // Test state setup helpers
 export const setupTestState = (overrides?: Partial<ProductionState>) => {
-  productionState.reset()
+  productionState.reset();
   
   if (overrides) {
     Object.entries(overrides).forEach(([key, value]) => {
       if (key !== 'currentStage' && key !== 'isLocked' && key !== 'lastSaved' && key !== 'projectId') {
-        productionState.updateStage(key as any, value as any)
+        productionState.updateStage(key as any, value as any);
       }
-    })
+    });
   }
-}
+};
 
 // Mock WebSocket helpers
 export const createMockWebSocket = () => {
-  const listeners: { [event: string]: Function[] } = {}
+  const listeners: { [event: string]: Function[] } = {};
   
   return {
     connected: true,
     on: jest.fn((event: string, callback: Function) => {
-      if (!listeners[event]) listeners[event] = []
-      listeners[event].push(callback)
+      if (!listeners[event]) listeners[event] = [];
+      listeners[event].push(callback);
     }),
     emit: jest.fn(),
     disconnect: jest.fn(),
     connect: jest.fn(),
     trigger: (event: string, data: any) => {
       if (listeners[event]) {
-        listeners[event].forEach(callback => callback(data))
+        listeners[event].forEach(callback => callback(data));
       }
     },
-  }
-}
+  };
+};
 
 // API response mocks
 export const mockApiResponses = {
@@ -159,66 +159,66 @@ export const mockApiResponses = {
     status,
     json: async () => ({ error: message }),
   }),
-}
+};
 
 // Wait helpers
 export const waitForCondition = async (
   condition: () => boolean,
   timeout = 5000,
-  interval = 100
+  interval = 100,
 ): Promise<void> => {
-  const startTime = Date.now()
+  const startTime = Date.now();
   
   while (!condition()) {
     if (Date.now() - startTime > timeout) {
-      throw new Error('Timeout waiting for condition')
+      throw new Error('Timeout waiting for condition');
     }
-    await new Promise(resolve => setTimeout(resolve, interval))
+    await new Promise(resolve => setTimeout(resolve, interval));
   }
-}
+};
 
 // File upload helpers
 export const createMockFile = (
   content: string,
   fileName: string,
-  mimeType = 'text/plain'
+  mimeType = 'text/plain',
 ): File => {
-  return new File([content], fileName, { type: mimeType })
-}
+  return new File([content], fileName, { type: mimeType });
+};
 
 export const createMockImageFile = (fileName: string): File => {
-  const canvas = document.createElement('canvas')
-  canvas.width = 100
-  canvas.height = 100
-  const ctx = canvas.getContext('2d')!
-  ctx.fillStyle = 'blue'
-  ctx.fillRect(0, 0, 100, 100)
+  const canvas = document.createElement('canvas');
+  canvas.width = 100;
+  canvas.height = 100;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = 'blue';
+  ctx.fillRect(0, 0, 100, 100);
   
-  return new File([canvas.toDataURL()], fileName, { type: 'image/jpeg' })
-}
+  return new File([canvas.toDataURL()], fileName, { type: 'image/jpeg' });
+};
 
 // Progress tracking helpers
 export class ProgressTracker {
-  private values: number[] = []
+  private values: number[] = [];
   
   record(value: number) {
-    this.values.push(value)
+    this.values.push(value);
   }
   
   get all() {
-    return this.values
+    return this.values;
   }
   
   get last() {
-    return this.values[this.values.length - 1]
+    return this.values[this.values.length - 1];
   }
   
   get isComplete() {
-    return this.last === 100
+    return this.last === 100;
   }
   
   get isProgressing() {
-    if (this.values.length < 2) return false
-    return this.values[this.values.length - 1] > this.values[this.values.length - 2]
+    if (this.values.length < 2) return false;
+    return this.values[this.values.length - 1] > this.values[this.values.length - 2];
   }
 }

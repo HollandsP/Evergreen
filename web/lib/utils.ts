@@ -130,9 +130,9 @@ export function getProgressColor(progress: number): string {
   return 'bg-green-500';
 }
 
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends(...args: any[]) => any>(
   func: T,
-  waitMs: number
+  waitMs: number,
 ): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout;
   
@@ -142,9 +142,9 @@ export function debounce<T extends (...args: any[]) => any>(
   };
 }
 
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends(...args: any[]) => any>(
   func: T,
-  limitMs: number
+  limitMs: number,
 ): (...args: Parameters<T>) => void {
   let inThrottle: boolean;
   

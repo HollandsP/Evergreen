@@ -10,7 +10,7 @@ type ExtendedNextApiResponse = NextApiResponse & {
   };
 };
 
-export default function handler(req: NextApiRequest, res: ExtendedNextApiResponse) {
+export default function handler(_req: NextApiRequest, res: ExtendedNextApiResponse) {
   if (res.socket.server.io) {
     console.log('Socket.IO already initialized');
     return res.end();

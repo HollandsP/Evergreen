@@ -128,3 +128,6 @@ export interface ImageData {
   status: 'pending' | 'generating' | 'completed' | 'error';
   error?: string;
 }
+
+// Re-export ProductionState from production-state.ts
+export type { ProductionState, ProductionStage, VoiceOption, VideoScene } from '@/lib/production-state';

@@ -15,7 +15,7 @@ interface ProductionLayoutProps {
 export const ProductionLayout: React.FC<ProductionLayoutProps> = ({ 
   children, 
   title,
-  currentStage 
+  currentStage, 
 }) => {
   const router = useRouter();
   const [stages, setStages] = useState<Stage[]>(DEFAULT_PRODUCTION_STAGES);
@@ -24,7 +24,7 @@ export const ProductionLayout: React.FC<ProductionLayoutProps> = ({
     audioGenerated: false,
     imagesGenerated: false,
     videosGenerated: false,
-    readyForAssembly: false
+    readyForAssembly: false,
   });
 
   useEffect(() => {

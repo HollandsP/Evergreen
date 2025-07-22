@@ -5,7 +5,7 @@ import {
   ClockIcon, 
   FilmIcon,
   BoltIcon,
-  CpuChipIcon
+  CpuChipIcon,
 } from '@heroicons/react/24/outline';
 
 // Components
@@ -21,11 +21,11 @@ import {
   ProviderConfig, 
   PipelineStep, 
   SystemStatus,
-  PipelineSettings
+  PipelineSettings,
 } from '@/types';
 import { apiClient } from '@/lib/api';
 import { wsManager } from '@/lib/websocket';
-import { generateId, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 // Note: Flux.1 support was removed due to high subscription costs
 // Only DALL-E 3 is available for image generation
@@ -36,15 +36,15 @@ const DEFAULT_PROVIDERS: ProviderConfig[] = [
     description: 'OpenAI\'s most advanced image generation model',
     cost: { 
       image: 0.040,  // $0.040 for 1024x1024, $0.080 for 1792x1024
-      video: 0.095 
+      video: 0.095, 
     },
     capabilities: {
       maxImageSize: '1792x1024',
       maxVideoDuration: 10,
-      qualityOptions: ['1024x1024', '1024x1792', '1792x1024']
+      qualityOptions: ['1024x1024', '1024x1792', '1792x1024'],
     },
-    available: true
-  }
+    available: true,
+  },
 ];
 
 const DEFAULT_SYSTEM_STATUS: SystemStatus = {
@@ -52,7 +52,7 @@ const DEFAULT_SYSTEM_STATUS: SystemStatus = {
   runwayAvailable: true,
   activeJobs: 0,
   queueLength: 0,
-  systemLoad: 0.2
+  systemLoad: 0.2,
 };
 
 const DEFAULT_SETTINGS: PipelineSettings = {
@@ -60,7 +60,7 @@ const DEFAULT_SETTINGS: PipelineSettings = {
   videoDuration: 10,
   quality: 'high',
   autoDownload: false,
-  notifications: true
+  notifications: true,
 };
 
 export default function Home() {
@@ -69,7 +69,7 @@ export default function Home() {
   const [jobHistory, setJobHistory] = useState<GenerationJob[]>([]);
   const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [providers, setProviders] = useState<ProviderConfig[]>(DEFAULT_PROVIDERS);
+  const [providers] = useState<ProviderConfig[]>(DEFAULT_PROVIDERS);
   const [systemStatus, setSystemStatus] = useState<SystemStatus>(DEFAULT_SYSTEM_STATUS);
   const [settings, setSettings] = useState<PipelineSettings>(DEFAULT_SETTINGS);
   const [currentStepId, setCurrentStepId] = useState<string>('');
@@ -104,13 +104,13 @@ export default function Home() {
     try {
       const [jobsResponse, statusResponse] = await Promise.allSettled([
         apiClient.getJobs(),
-        apiClient.getSystemStatus()
+        apiClient.getSystemStatus(),
       ]);
 
       if (jobsResponse.status === 'fulfilled') {
         setJobHistory(jobsResponse.value);
         const activeJob = jobsResponse.value.find(job => 
-          ['pending', 'generating_image', 'generating_video'].includes(job.status)
+          ['pending', 'generating_image', 'generating_video'].includes(job.status),
         );
         if (activeJob) {
           setCurrentJob(activeJob);
@@ -127,21 +127,41 @@ export default function Home() {
   };
 
   const setupWebSocketListeners = () => {
-    // Initialize WebSocket connection
-    wsManager.connect();
-    
-    wsManager.subscribe('job_update', handleJobUpdate);
-    wsManager.subscribe('step_update', handleStepUpdate);
-    wsManager.subscribe('job_completed', handleJobCompleted);
-    wsManager.subscribe('job_failed', handleJobFailed);
-    wsManager.subscribe('system_status', handleSystemStatusUpdate);
+    // Initialize WebSocket connection with retry logic
+    try {
+      wsManager.connect();
+      
+      wsManager.subscribe('job_update', handleJobUpdate);
+      wsManager.subscribe('step_update', handleStepUpdate);
+      wsManager.subscribe('job_completed', handleJobCompleted);
+      wsManager.subscribe('job_failed', handleJobFailed);
+      wsManager.subscribe('system_status', handleSystemStatusUpdate);
+      
+      // Add connection status listeners
+      wsManager.subscribe('connected', () => {
+        console.log('WebSocket connected successfully');
+      });
+      
+      wsManager.subscribe('disconnected', (data) => {
+        console.warn('WebSocket disconnected:', data.reason);
+        // Attempt reconnection after a delay
+        setTimeout(() => {
+          if (!wsManager.isConnected()) {
+            console.log('Attempting WebSocket reconnection...');
+            wsManager.connect();
+          }
+        }, 5000);
+      });
+    } catch (error) {
+      console.error('Failed to setup WebSocket listeners:', error);
+    }
   };
 
   const handleJobUpdate = useCallback((data: any) => {
     const updatedJob: GenerationJob = {
       ...data,
       createdAt: new Date(data.createdAt),
-      updatedAt: new Date(data.updatedAt)
+      updatedAt: new Date(data.updatedAt),
     };
 
     setCurrentJob(updatedJob);
@@ -155,7 +175,7 @@ export default function Home() {
     const step: PipelineStep = {
       ...data,
       startTime: data.startTime ? new Date(data.startTime) : undefined,
-      endTime: data.endTime ? new Date(data.endTime) : undefined
+      endTime: data.endTime ? new Date(data.endTime) : undefined,
     };
 
     setPipelineSteps(prev => {
@@ -172,7 +192,7 @@ export default function Home() {
     const completedJob: GenerationJob = {
       ...data,
       createdAt: new Date(data.createdAt),
-      updatedAt: new Date(data.updatedAt)
+      updatedAt: new Date(data.updatedAt),
     };
 
     setCurrentJob(completedJob);
@@ -183,7 +203,7 @@ export default function Home() {
     if (settings.notifications && 'Notification' in window) {
       new Notification('Video Generation Complete!', {
         body: 'Your AI-generated video is ready.',
-        icon: '/favicon.ico'
+        icon: '/favicon.ico',
       });
     }
 
@@ -197,7 +217,7 @@ export default function Home() {
     const failedJob: GenerationJob = {
       ...data,
       createdAt: new Date(data.createdAt),
-      updatedAt: new Date(data.updatedAt)
+      updatedAt: new Date(data.updatedAt),
     };
 
     setCurrentJob(failedJob);
@@ -208,7 +228,7 @@ export default function Home() {
     if (settings.notifications && 'Notification' in window) {
       new Notification('Generation Failed', {
         body: failedJob.error || 'An error occurred during generation.',
-        icon: '/favicon.ico'
+        icon: '/favicon.ico',
       });
     }
   }, [settings]);
@@ -235,14 +255,14 @@ export default function Home() {
           id: 'image_generation',
           name: 'Image Generation',
           status: 'pending',
-          progress: 0
+          progress: 0,
         },
         {
           id: 'video_generation',
           name: 'Video Generation',
           status: 'pending',
-          progress: 0
-        }
+          progress: 0,
+        },
       ];
       setPipelineSteps(initialSteps);
 
@@ -275,8 +295,8 @@ export default function Home() {
           imageSize: settings.imageSize,
           videoDuration: settings.videoDuration,
           quality: settings.quality,
-          seed: settings.seed
-        }
+          seed: settings.seed,
+        },
       };
       await handleGenerate(request);
     }
@@ -441,7 +461,7 @@ export default function Home() {
                   <div className="divide-y divide-gray-200">
                     {jobHistory.slice(0, 5).map((job) => (
                       <div key={job.id} className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                           onClick={() => setCurrentJob(job)}>
+                        onClick={() => setCurrentJob(job)}>
                         <div className="flex items-center justify-between">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate">

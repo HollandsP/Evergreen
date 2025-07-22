@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   WifiIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 import { wsManager } from '@/lib/websocket';
 import { cn } from '@/lib/utils';
@@ -65,7 +65,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ className })
           text: 'Connected',
           color: 'text-green-600',
           bgColor: 'bg-green-50',
-          borderColor: 'border-green-200'
+          borderColor: 'border-green-200',
         };
       case 'connecting':
         return {
@@ -73,7 +73,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ className })
           text: reconnectAttempts > 0 ? `Reconnecting... (${reconnectAttempts})` : 'Connecting...',
           color: 'text-yellow-600',
           bgColor: 'bg-yellow-50',
-          borderColor: 'border-yellow-200'
+          borderColor: 'border-yellow-200',
         };
       case 'error':
         return {
@@ -81,7 +81,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ className })
           text: 'Connection Error',
           color: 'text-red-600',
           bgColor: 'bg-red-50',
-          borderColor: 'border-red-200'
+          borderColor: 'border-red-200',
         };
       case 'disconnected':
       default:
@@ -90,7 +90,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ className })
           text: 'Disconnected',
           color: 'text-gray-600',
           bgColor: 'bg-gray-50',
-          borderColor: 'border-gray-200'
+          borderColor: 'border-gray-200',
         };
     }
   };
@@ -113,13 +113,13 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ className })
           'flex items-center space-x-2 px-3 py-1 rounded-full border text-sm',
           config.color,
           config.bgColor,
-          config.borderColor
+          config.borderColor,
         )}
       >
         <Icon 
           className={cn(
             'h-4 w-4',
-            connectionState === 'connecting' && 'animate-pulse'
+            connectionState === 'connecting' && 'animate-pulse',
           )} 
         />
         <span className="font-medium">{config.text}</span>

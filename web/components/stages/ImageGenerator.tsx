@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   PhotoIcon, 
   SparklesIcon, 
@@ -7,7 +7,7 @@ import {
   CheckIcon,
   XMarkIcon,
   ArrowPathIcon,
-  CloudArrowDownIcon
+  CloudArrowDownIcon,
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/20/solid';
 import { cn } from '@/lib/utils';
@@ -52,9 +52,8 @@ const DALLE3_INFO = {
   id: 'dalle3', 
   name: 'DALL-E 3', 
   description: 'OpenAI\'s latest model - Professional quality photorealistic images',
-  cost: '$0.040 per image (1024x1024) / $0.080 per image (1024x1792)'
+  cost: '$0.040 per image (1024x1024) / $0.080 per image (1024x1792)',
 };
-
 
 export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onComplete }) => {
   const [scenes, setScenes] = useState<SceneData[]>([]);
@@ -86,7 +85,7 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onComplete }) =>
           url: '',
           prompt: scene.imagePrompt || '',
           provider: 'dalle3',
-          status: 'pending'
+          status: 'pending',
         };
       });
       setImageData(initialImageData);
@@ -109,7 +108,7 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onComplete }) =>
     setGeneratingScene(sceneId);
     setImageData(prev => ({
       ...prev,
-      [sceneId]: { ...prev[sceneId], status: 'generating', provider: provider }
+      [sceneId]: { ...prev[sceneId], status: 'generating', provider: provider },
     }));
 
     try {
@@ -120,8 +119,8 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onComplete }) =>
           prompt,
           provider: 'dalle3',
           sceneId,
-          size: '1792x1024' // 16:9 aspect ratio for DALL-E 3
-        })
+          size: '1792x1024', // 16:9 aspect ratio for DALL-E 3
+        }),
       });
 
       if (!response.ok) {
@@ -138,8 +137,8 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onComplete }) =>
           url: data.url,
           prompt,
           provider: 'dalle3',
-          status: 'completed'
-        }
+          status: 'completed',
+        },
       }));
 
       // Save to localStorage
@@ -150,8 +149,8 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onComplete }) =>
           url: data.url,
           prompt,
           provider: 'dalle3',
-          status: 'completed'
-        }
+          status: 'completed',
+        },
       };
       localStorage.setItem('imageData', JSON.stringify(updatedImageData));
 
@@ -162,8 +161,8 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onComplete }) =>
         [sceneId]: {
           ...prev[sceneId],
           status: 'error',
-          error: error instanceof Error ? error.message : 'Generation failed'
-        }
+          error: error instanceof Error ? error.message : 'Generation failed',
+        },
       }));
     } finally {
       setGeneratingScene(null);
@@ -181,8 +180,8 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onComplete }) =>
           {
             sceneType: scene.metadata.sceneType,
             audioDuration,
-            provider: provider
-          }
+            provider: provider,
+          },
         );
         await generateImage(scene.id, enhancedPrompt);
         
@@ -202,7 +201,7 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onComplete }) =>
   const savePromptEdit = (sceneId: string) => {
     setImageData(prev => ({
       ...prev,
-      [sceneId]: { ...prev[sceneId], prompt: editedPromptText }
+      [sceneId]: { ...prev[sceneId], prompt: editedPromptText },
     }));
     setEditingPrompt(null);
     setEditedPromptText('');
@@ -216,8 +215,8 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onComplete }) =>
         url: imageUrl,
         prompt: 'User uploaded image',
         provider: 'upload',
-        status: 'completed'
-      }
+        status: 'completed',
+      },
     }));
 
     // Save to localStorage
@@ -228,8 +227,8 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onComplete }) =>
         url: imageUrl,
         prompt: 'User uploaded image',
         provider: 'upload',
-        status: 'completed'
-      }
+        status: 'completed',
+      },
     };
     localStorage.setItem('imageData', JSON.stringify(updatedImageData));
     
@@ -237,7 +236,7 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onComplete }) =>
   };
 
   const allImagesGenerated = scenes.every(
-    scene => imageData[scene.id]?.status === 'completed'
+    scene => imageData[scene.id]?.status === 'completed',
   );
 
   const handleComplete = () => {
@@ -289,11 +288,11 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onComplete }) =>
               onClick={generateAllImages}
               disabled={isGenerating || allImagesGenerated}
               className={cn(
-                "inline-flex items-center px-4 py-2 text-sm font-medium rounded-md",
-                "border border-transparent shadow-sm",
+                'inline-flex items-center px-4 py-2 text-sm font-medium rounded-md',
+                'border border-transparent shadow-sm',
                 isGenerating || allImagesGenerated
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-primary-600 text-white hover:bg-primary-700"
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-primary-600 text-white hover:bg-primary-700',
               )}
             >
               {isGenerating ? (
@@ -393,8 +392,8 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onComplete }) =>
                                 {
                                   sceneType: scene.metadata.sceneType,
                                   audioDuration,
-                                  provider: provider
-                                }
+                                  provider: provider,
+                                },
                               );
                               generateImage(scene.id, enhancedPrompt);
                             }}

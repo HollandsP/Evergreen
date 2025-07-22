@@ -15,11 +15,62 @@ import cv2
 import numpy as np
 from dataclasses import dataclass
 from enum import Enum
+from fractions import Fraction
+import re
 
 from .gpu_accelerated_ffmpeg import GPUAcceleratedFFmpeg
 from .ffmpeg_service import FFmpegService
 
 logger = logging.getLogger(__name__)
+
+def safe_parse_frame_rate(frame_rate_str: str) -> float:
+    """
+    Safely parse frame rate string without using eval().
+    
+    Args:
+        frame_rate_str: Frame rate as string (e.g., "30/1", "25/1")
+    
+    Returns:
+        Frame rate as float
+    """
+    if not frame_rate_str or frame_rate_str == "0/0":
+        return 0.0
+    
+    try:
+        # Validate input format (should be "number/number")
+        if not re.match(r'^\d+/\d+$', frame_rate_str):
+            logger.warning(f"Invalid frame rate format: {frame_rate_str}")
+            return 0.0
+        
+        # Use Fraction for safe parsing
+        fraction = Fraction(frame_rate_str)
+        return float(fraction)
+    except (ValueError, ZeroDivisionError) as e:
+        logger.warning(f"Error parsing frame rate '{frame_rate_str}': {e}")
+        return 0.0
+
+def validate_file_path(file_path: str) -> str:
+    """
+    Validate and sanitize file path.
+    
+    Args:
+        file_path: Input file path
+    
+    Returns:
+        Sanitized file path
+    
+    Raises:
+        ValueError: If path is invalid
+    """
+    if not file_path:
+        raise ValueError("File path cannot be empty")
+    
+    path = Path(file_path).resolve()
+    
+    if not path.exists():
+        raise ValueError(f"File does not exist: {path}")
+    
+    return str(path)
 
 
 class ContentType(Enum):
@@ -120,6 +171,8 @@ class VideoQualityOptimizer:
     
     async def _get_video_info(self, video_path: str) -> Dict[str, Any]:
         """Get video metadata."""
+        # Validate file path
+        video_path = validate_file_path(video_path)
         
         cmd = [
             'ffprobe', '-v', 'quiet',
@@ -153,7 +206,7 @@ class VideoQualityOptimizer:
         return {
             'width': int(video_stream['width']),
             'height': int(video_stream['height']),
-            'fps': eval(video_stream['r_frame_rate']),
+            'fps': safe_parse_frame_rate(video_stream['r_frame_rate']),
             'duration': float(data['format']['duration']),
             'bitrate': int(data['format'].get('bit_rate', 0)),
             'codec': video_stream['codec_name'],
@@ -162,6 +215,8 @@ class VideoQualityOptimizer:
     
     async def _analyze_motion(self, video_path: str) -> float:
         """Analyze motion in video (0-1 scale)."""
+        # Validate file path
+        video_path = validate_file_path(video_path)
         
         cap = cv2.VideoCapture(video_path)
         
@@ -197,6 +252,8 @@ class VideoQualityOptimizer:
     
     async def _analyze_complexity(self, video_path: str) -> float:
         """Analyze visual complexity (0-1 scale)."""
+        # Validate file path
+        video_path = validate_file_path(video_path)
         
         cap = cv2.VideoCapture(video_path)
         
@@ -227,6 +284,8 @@ class VideoQualityOptimizer:
     
     async def _analyze_brightness(self, video_path: str) -> float:
         """Analyze percentage of dark scenes (0-1 scale)."""
+        # Validate file path
+        video_path = validate_file_path(video_path)
         
         cap = cv2.VideoCapture(video_path)
         
@@ -260,6 +319,8 @@ class VideoQualityOptimizer:
     
     async def _detect_scene_changes(self, video_path: str) -> List[float]:
         """Detect scene changes in video."""
+        # Validate file path
+        video_path = validate_file_path(video_path)
         
         # Use FFmpeg scene detection
         cmd = [

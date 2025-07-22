@@ -7,13 +7,13 @@ import {
   AudioData,
   ImageData,
   ImageGenerationRequest,
-  ImageGenerationResponse
+  ImageGenerationResponse,
 } from '@/types';
 import { 
   ProductionState, 
   ProductionStage, 
   VoiceOption,
-  VideoScene 
+  VideoScene, 
 } from '@/lib/production-state';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
@@ -48,7 +48,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor
@@ -57,7 +57,7 @@ api.interceptors.response.use(
   (error) => {
     console.error('API Error:', error.response?.data || error.message);
     return Promise.reject(error);
-  }
+  },
 );
 
 export const apiClient = {
@@ -121,7 +121,7 @@ export const apiClient = {
   async setProductionStage(targetStage: ProductionStage): Promise<void> {
     await internalApi.post('/api/production/state', { 
       action: 'setStage', 
-      targetStage 
+      targetStage, 
     });
   },
 
@@ -171,7 +171,7 @@ export const apiClient = {
   async generateAudioBatch(
     scenes: ScriptScene[],
     voiceId: string,
-    settings?: any
+    settings?: any,
   ): Promise<{
     audioData: AudioData[];
     totalDuration: number;
@@ -193,7 +193,7 @@ export const apiClient = {
       size?: '1024x1024' | '1792x1024' | '1024x1792';
       quality?: 'standard' | 'hd';
       style?: 'vivid' | 'natural';
-    }
+    },
   ): Promise<{
     imageData: ImageData[];
     totalCost: number;
@@ -214,7 +214,7 @@ export const apiClient = {
       audioUrl: string;
       duration: number;
     }>,
-    settings?: any
+    settings?: any,
   ): Promise<{
     videoData: VideoScene[];
     totalCost: number;

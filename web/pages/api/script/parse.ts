@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version',
   );
 
   if (req.method === 'OPTIONS') {
@@ -211,7 +211,7 @@ async function parseScriptContent(content: string): Promise<ParsedScript> {
 function processScene(
   scene: Partial<ScriptScene>,
   lines: string[],
-  timestamp: number
+  timestamp: number,
 ): ScriptScene {
   const content = lines.join('\n');
   
@@ -288,13 +288,13 @@ async function generateImagePrompts(scenes: ScriptScene[]): Promise<ScriptScene[
     // Base the prompt on scene type
     switch (scene.metadata.sceneType) {
       case 'title':
-        prompt = `Cinematic title card with dramatic lighting, text overlay space, professional movie poster style`;
+        prompt = 'Cinematic title card with dramatic lighting, text overlay space, professional movie poster style';
         break;
       case 'ending':
-        prompt = `Elegant ending scene with soft lighting, peaceful atmosphere, cinematic closure`;
+        prompt = 'Elegant ending scene with soft lighting, peaceful atmosphere, cinematic closure';
         break;
       case 'transition':
-        prompt = `Abstract transitional visual, flowing shapes, cinematic transition effect`;
+        prompt = 'Abstract transitional visual, flowing shapes, cinematic transition effect';
         break;
       default:
         // Use visual description if available

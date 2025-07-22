@@ -3,6 +3,8 @@ import { SpeakerWaveIcon, PlayIcon, PauseIcon, ArrowDownTrayIcon, SparklesIcon }
 import { CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/20/solid';
 import { cn } from '@/lib/utils';
 import WaveformVisualizer from '../audio/WaveformVisualizer';
+import ErrorBoundary from '../ErrorBoundary';
+import LoadingSpinner from '../LoadingSpinner';
 
 interface SceneData {
   id: string;
@@ -56,7 +58,7 @@ export const AudioGenerator: React.FC<AudioGeneratorProps> = ({ onComplete }) =>
           sceneId: scene.id,
           url: '',
           duration: 0,
-          status: 'pending'
+          status: 'pending',
         };
       });
       setAudioData(initialAudioData);
@@ -74,57 +76,84 @@ export const AudioGenerator: React.FC<AudioGeneratorProps> = ({ onComplete }) =>
     setGeneratingScene(sceneId);
     setAudioData(prev => ({
       ...prev,
-      [sceneId]: { ...prev[sceneId], status: 'generating' }
+      [sceneId]: { ...prev[sceneId], status: 'generating' },
     }));
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+
       const response = await fetch('/api/audio/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: narration,
           voice: selectedVoice,
-          sceneId
-        })
+          sceneId,
+        }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error('Failed to generate audio');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
+      
+      if (!data.audioUrl) {
+        throw new Error('No audio URL returned from server');
+      }
       
       setAudioData(prev => ({
         ...prev,
         [sceneId]: {
           sceneId,
           url: data.audioUrl,
-          duration: data.duration,
-          status: 'completed'
-        }
+          duration: data.duration || 0,
+          status: 'completed',
+        },
       }));
 
-      // Save to localStorage
-      const updatedAudioData = {
-        ...audioData,
-        [sceneId]: {
-          sceneId,
-          url: data.audioUrl,
-          duration: data.duration,
-          status: 'completed'
-        }
-      };
-      localStorage.setItem('audioData', JSON.stringify(updatedAudioData));
+      // Save to localStorage with error handling
+      try {
+        const updatedAudioData = {
+          ...audioData,
+          [sceneId]: {
+            sceneId,
+            url: data.audioUrl,
+            duration: data.duration || 0,
+            status: 'completed',
+          },
+        };
+        localStorage.setItem('audioData', JSON.stringify(updatedAudioData));
+      } catch (storageError) {
+        console.warn('Failed to save audio data to localStorage:', storageError);
+      }
 
     } catch (error) {
+      let errorMessage = 'Unknown error occurred';
+      
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          errorMessage = 'Request timed out after 60 seconds';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       setAudioData(prev => ({
         ...prev,
         [sceneId]: {
           ...prev[sceneId],
           status: 'error',
-          error: error instanceof Error ? error.message : 'Unknown error'
-        }
+          error: errorMessage,
+        },
       }));
+      
+      console.error(`Audio generation failed for scene ${sceneId}:`, error);
     } finally {
       setGeneratingScene(null);
     }
@@ -133,17 +162,26 @@ export const AudioGenerator: React.FC<AudioGeneratorProps> = ({ onComplete }) =>
   const generateAllAudio = async () => {
     setIsGenerating(true);
     
-    for (const scene of scenes) {
-      if (audioData[scene.id]?.status !== 'completed') {
-        await generateAudio(scene.id, scene.narration);
-      }
+    try {
+      // Process scenes in parallel for better performance
+      const scenesToGenerate = scenes.filter(scene => 
+        audioData[scene.id]?.status !== 'completed',
+      );
+      
+      const generatePromises = scenesToGenerate.map(scene =>
+        generateAudio(scene.id, scene.narration),
+      );
+      
+      await Promise.all(generatePromises);
+    } catch (error) {
+      console.error('Error during batch audio generation:', error);
+    } finally {
+      setIsGenerating(false);
     }
-
-    setIsGenerating(false);
     
     // Check if all completed
     const allCompleted = Object.values(audioData).every(
-      audio => audio.status === 'completed'
+      audio => audio.status === 'completed',
     );
     
     if (allCompleted) {
@@ -229,10 +267,10 @@ export const AudioGenerator: React.FC<AudioGeneratorProps> = ({ onComplete }) =>
               onClick={generateAllAudio}
               disabled={isGenerating || completedCount === totalCount}
               className={cn(
-                "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white",
+                'inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white',
                 isGenerating || completedCount === totalCount
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-primary-600 hover:bg-primary-700"
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-primary-600 hover:bg-primary-700',
               )}
             >
               <SparklesIcon className="h-5 w-5 mr-2" />
@@ -299,7 +337,7 @@ export const AudioGenerator: React.FC<AudioGeneratorProps> = ({ onComplete }) =>
                           onClick={() => downloadAudio(scene.id, scene.metadata.sceneType)}
                           className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50"
                         >
-                          <DownloadIcon className="h-5 w-5" />
+                          <ArrowDownTrayIcon className="h-5 w-5" />
                         </button>
                       </>
                     )}
@@ -324,10 +362,12 @@ export const AudioGenerator: React.FC<AudioGeneratorProps> = ({ onComplete }) =>
                 
                 {/* Status Messages */}
                 {isGeneratingThis && (
-                  <div className="flex items-center text-sm text-gray-600">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600 mr-2" />
-                    Generating audio...
-                  </div>
+                  <LoadingSpinner 
+                    size="sm" 
+                    text="Generating audio..." 
+                    className="text-sm text-gray-600"
+                    inline 
+                  />
                 )}
                 
                 {audio?.status === 'error' && (
@@ -339,11 +379,21 @@ export const AudioGenerator: React.FC<AudioGeneratorProps> = ({ onComplete }) =>
                 {/* Waveform Visualization */}
                 {audio?.status === 'completed' && audio.url && (
                   <div className="mt-4">
-                    <WaveformVisualizer
-                      audioUrl={audio.url}
-                      duration={audio.duration}
-                      isPlaying={playingAudio === scene.id}
-                    />
+                    <ErrorBoundary
+                      fallback={
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                          <p className="text-sm text-yellow-800">
+                            Unable to load waveform visualization
+                          </p>
+                        </div>
+                      }
+                    >
+                      <WaveformVisualizer
+                        audioUrl={audio.url}
+                        duration={audio.duration}
+                        isPlaying={playingAudio === scene.id}
+                      />
+                    </ErrorBoundary>
                     <p className="text-sm text-gray-500 mt-2">
                       Duration: {formatDuration(audio.duration)}
                     </p>

@@ -83,6 +83,10 @@ export interface VideoScene {
   motionPrompt?: string;
   duration: number;
   error?: string;
+  metadata?: {
+    provider?: string;
+    processingTime?: number;
+  };
 }
 
 export type ProductionStage = 
@@ -190,12 +194,12 @@ class ProductionStateManager extends EventEmitter {
   
   public updateStage<K extends keyof ProductionState>(
     stage: K,
-    updates: Partial<ProductionState[K]>
+    updates: Partial<ProductionState[K]>,
   ): void {
     this.state[stage] = {
-      ...this.state[stage],
+      ...(this.state[stage] as object),
       ...updates,
-    };
+    } as ProductionState[K];
     
     this.saveState();
     
@@ -278,7 +282,7 @@ class ProductionStateManager extends EventEmitter {
     const stages: ProductionStage[] = ['script', 'voice', 'audio', 'images', 'video', 'assembly'];
     let totalProgress = 0;
     
-    stages.forEach((stage, index) => {
+    stages.forEach((stage) => {
       const stageState = this.state[stage];
       let stageProgress = 0;
       
@@ -339,7 +343,7 @@ export const productionState = new ProductionStateManager();
 export const getProductionState = () => productionState.getState();
 export const updateProductionStage = <K extends keyof ProductionState>(
   stage: K,
-  updates: Partial<ProductionState[K]>
+  updates: Partial<ProductionState[K]>,
 ) => productionState.updateStage(stage, updates);
 export const setCurrentStage = (stage: ProductionStage) => productionState.setCurrentStage(stage);
 export const canProceedToStage = (stage: ProductionStage) => productionState.canProceedToStage(stage);

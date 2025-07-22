@@ -6,7 +6,7 @@ const mockJobs = new Map<string, GenerationJob>();
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<GenerationJob | { error: string } | { message: string }>
+  res: NextApiResponse<GenerationJob | { error: string } | { message: string }>,
 ) {
   const { id } = req.query;
 
@@ -27,7 +27,7 @@ export default async function handler(
 
 async function handleGet(
   id: string,
-  res: NextApiResponse<GenerationJob | { error: string }>
+  res: NextApiResponse<GenerationJob | { error: string }>,
 ) {
   try {
     // In a real implementation, fetch from your backend
@@ -80,7 +80,7 @@ async function handleGet(
 
 async function handleDelete(
   id: string,
-  res: NextApiResponse<{ message: string } | { error: string }>
+  res: NextApiResponse<{ message: string } | { error: string }>,
 ) {
   try {
     // In a real implementation, cancel the job in your backend

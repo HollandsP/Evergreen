@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es2018",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -43,5 +43,5 @@
     ".next/types/**/*.ts",
     "types/**/*.d.ts"
   ],
-  "exclude": ["node_modules", ".next", "out", "dist"]
+  "exclude": ["node_modules", ".next", "out", "dist", "tests/**/*", "**/*.test.ts", "**/*.test.tsx"]
 }

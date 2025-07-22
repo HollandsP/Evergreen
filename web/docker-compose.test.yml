@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  # Test database - separate from production
+  test-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: evergreen_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - test-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d evergreen_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - test-network
+
+  # Test Redis - for caching and queues
+  test-redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - test-network
+
+  # Mock backend service for API tests
+  test-backend:
+    image: node:18-alpine
+    working_dir: /app
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://test_user:test_password@test-db:5432/evergreen_test
+      - REDIS_URL=redis://test-redis:6379
+    ports:
+      - "8001:8000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: ["sh", "-c", "sleep 30 && npm run test:backend"]
+    depends_on:
+      test-db:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - test-network
+
+  # Frontend test runner
+  test-frontend:
+    image: node:18-alpine
+    working_dir: /app
+    environment:
+      - NODE_ENV=test
+      - NEXT_PUBLIC_API_URL=http://test-backend:8000/api
+      - NEXT_PUBLIC_WS_URL=ws://test-backend:8000
+      - CI=true
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    command: ["sh", "-c", "npm run test:ci"]
+    depends_on:
+      test-backend:
+        condition: service_healthy
+    networks:
+      - test-network
+
+volumes:
+  test-db-data:
+
+networks:
+  test-network:
+    driver: bridge

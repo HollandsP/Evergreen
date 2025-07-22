@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { DocumentTextIcon, CloudArrowUpIcon, PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { CloudArrowUpIcon, PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { scriptParser, ParsedScript, ScriptScene } from '@/lib/script-parser';
 import { cn } from '@/lib/utils';
 
@@ -91,7 +91,7 @@ export const ScriptProcessor: React.FC<ScriptProcessorProps> = ({ onComplete }) 
     const updatedScenes = parsedScript.scenes.map(scene => 
       scene.id === editingScene 
         ? { ...scene, narration: editedNarration }
-        : scene
+        : scene,
     );
 
     const updatedScript = { ...parsedScript, scenes: updatedScenes };
@@ -126,10 +126,10 @@ export const ScriptProcessor: React.FC<ScriptProcessorProps> = ({ onComplete }) 
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             className={cn(
-              "relative border-2 border-dashed rounded-lg p-12 text-center transition-all duration-200",
+              'relative border-2 border-dashed rounded-lg p-12 text-center transition-all duration-200',
               isDragging 
-                ? "border-primary-500 bg-primary-50" 
-                : "border-gray-300 hover:border-gray-400 bg-white"
+                ? 'border-primary-500 bg-primary-50' 
+                : 'border-gray-300 hover:border-gray-400 bg-white',
             )}
           >
             <input
@@ -141,8 +141,8 @@ export const ScriptProcessor: React.FC<ScriptProcessorProps> = ({ onComplete }) 
             />
             
             <CloudArrowUpIcon className={cn(
-              "mx-auto h-16 w-16 transition-colors",
-              isDragging ? "text-primary-500" : "text-gray-400"
+              'mx-auto h-16 w-16 transition-colors',
+              isDragging ? 'text-primary-500' : 'text-gray-400',
             )} />
             
             <h3 className="mt-4 text-lg font-semibold text-gray-900">
@@ -181,7 +181,7 @@ export const ScriptProcessor: React.FC<ScriptProcessorProps> = ({ onComplete }) 
           <div className="bg-gray-50 rounded-lg p-6">
             <h4 className="text-sm font-medium text-gray-900 mb-3">Expected Format:</h4>
             <pre className="text-xs text-gray-600 font-mono bg-white p-3 rounded border border-gray-200 overflow-x-auto">
-{`[0:00 - Cold Open | Terminal Boot-Up]
+              {`[0:00 - Cold Open | Terminal Boot-Up]
 Visual: Terminal-style screen blinking to life.
 ON-SCREEN TEXT:
 ACCESSING: INCIDENT LOG

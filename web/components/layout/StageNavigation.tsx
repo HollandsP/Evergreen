@@ -6,7 +6,7 @@ import {
   PhotoIcon,
   VideoCameraIcon,
   FilmIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '../../lib/utils';
 
@@ -30,20 +30,20 @@ const statusColors = {
   pending: 'border-gray-300 bg-white text-gray-500',
   in_progress: 'border-primary-500 bg-primary-50 text-primary-600',
   completed: 'border-green-500 bg-green-50 text-green-600',
-  disabled: 'border-gray-200 bg-gray-50 text-gray-400'
+  disabled: 'border-gray-200 bg-gray-50 text-gray-400',
 };
 
 const statusTextColors = {
   pending: 'text-gray-500',
   in_progress: 'text-primary-600',
   completed: 'text-green-600',
-  disabled: 'text-gray-400'
+  disabled: 'text-gray-400',
 };
 
 export const StageNavigation: React.FC<StageNavigationProps> = ({
   currentStage,
   stages,
-  onStageChange
+  onStageChange,
 }) => {
   const router = useRouter();
 
@@ -75,14 +75,14 @@ export const StageNavigation: React.FC<StageNavigationProps> = ({
                     isActive
                       ? 'bg-primary-100 text-primary-700 border border-primary-200'
                       : stage.isAvailable
-                      ? 'hover:bg-gray-50 text-gray-600 border border-transparent hover:border-gray-200'
-                      : 'cursor-not-allowed opacity-50 text-gray-400 border border-transparent'
+                        ? 'hover:bg-gray-50 text-gray-600 border border-transparent hover:border-gray-200'
+                        : 'cursor-not-allowed opacity-50 text-gray-400 border border-transparent',
                   )}
                 >
                   <div
                     className={cn(
                       'flex h-8 w-8 items-center justify-center rounded-full border-2 transition-colors',
-                      statusColors[stage.status]
+                      statusColors[stage.status],
                     )}
                   >
                     {stage.status === 'completed' ? (
@@ -136,7 +136,7 @@ export const DEFAULT_PRODUCTION_STAGES: Stage[] = [
     icon: DocumentTextIcon,
     path: '/production/script',
     status: 'pending',
-    isAvailable: true
+    isAvailable: true,
   },
   {
     id: 'audio',
@@ -145,7 +145,7 @@ export const DEFAULT_PRODUCTION_STAGES: Stage[] = [
     icon: SpeakerWaveIcon,
     path: '/production/audio',
     status: 'disabled',
-    isAvailable: false
+    isAvailable: false,
   },
   {
     id: 'images',
@@ -154,7 +154,7 @@ export const DEFAULT_PRODUCTION_STAGES: Stage[] = [
     icon: PhotoIcon,
     path: '/production/images',
     status: 'disabled',
-    isAvailable: false
+    isAvailable: false,
   },
   {
     id: 'videos',
@@ -163,7 +163,7 @@ export const DEFAULT_PRODUCTION_STAGES: Stage[] = [
     icon: VideoCameraIcon,
     path: '/production/videos',
     status: 'disabled',
-    isAvailable: false
+    isAvailable: false,
   },
   {
     id: 'assembly',
@@ -172,8 +172,8 @@ export const DEFAULT_PRODUCTION_STAGES: Stage[] = [
     icon: FilmIcon,
     path: '/production/assembly',
     status: 'disabled',
-    isAvailable: false
-  }
+    isAvailable: false,
+  },
 ];
 
 export default StageNavigation;

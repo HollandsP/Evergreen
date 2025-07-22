@@ -65,7 +65,7 @@ export class ScriptParser {
           description: description.trim(),
           visual: '',
           narration: '',
-          onScreenText: { lines: [] }
+          onScreenText: { lines: [] },
         };
       } else if (currentScene) {
         // Process content within current scene
@@ -111,7 +111,7 @@ export class ScriptParser {
       title,
       logNumber,
       scenes,
-      totalDuration
+      totalDuration,
     };
   }
   
@@ -119,7 +119,7 @@ export class ScriptParser {
     const [minutes, seconds] = timestamp.split(':').map(Number);
     return {
       time: timestamp,
-      seconds: minutes * 60 + seconds
+      seconds: minutes * 60 + seconds,
     };
   }
   
@@ -140,7 +140,7 @@ export class ScriptParser {
       visual: scene.visual || '',
       narration: scene.narration,
       onScreenText: scene.onScreenText?.lines.length ? scene.onScreenText : undefined,
-      imagePrompt: scene.imagePrompt
+      imagePrompt: scene.imagePrompt,
     };
   }
   
@@ -157,7 +157,7 @@ export class ScriptParser {
     const { visual, sceneType, description } = scene;
     
     // Base style for all images
-    const baseStyle = "cinematic, high contrast, moody lighting, 16:9 aspect ratio";
+    const baseStyle = 'cinematic, high contrast, moody lighting, 16:9 aspect ratio';
     
     // Scene-specific styles
     const sceneStyles: Record<string, string> = {
@@ -165,7 +165,7 @@ export class ScriptParser {
       'Terminal Boot-Up': 'retro computer terminal, green phosphor text, dark background',
       'Office Montage': 'modern office, futuristic tech, clean minimal design',
       'Rooftop Scene': 'dramatic sky, urban cityscape, ethereal lighting',
-      'Outro': 'distorted, glitchy, unsettling'
+      'Outro': 'distorted, glitchy, unsettling',
     };
     
     // Find matching style
@@ -207,9 +207,9 @@ export class ScriptParser {
         metadata: {
           sceneType: scene.sceneType,
           description: scene.description,
-          visual: scene.visual
-        }
-      }))
+          visual: scene.visual,
+        },
+      })),
     };
   }
 }

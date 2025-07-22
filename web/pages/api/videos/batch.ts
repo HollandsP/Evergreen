@@ -1,7 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { ImageData, AudioData } from '@/types';
 import { updateProductionStage, VideoScene } from '@/lib/production-state';
-import { v4 as uuidv4 } from 'uuid';
 
 interface BatchVideoRequest {
   scenes: Array<{
@@ -34,19 +32,16 @@ async function generateMockVideo(scene: BatchVideoRequest['scenes'][0]): Promise
   return {
     sceneId: scene.sceneId,
     videoUrl: mockVideoUrl,
+    imageUrl: scene.imageUrl,
     duration: scene.duration,
-    status: 'completed',
-    metadata: {
-      provider: 'mock',
-      processingTime: Math.round(Math.random() * 10 + 5),
-    },
+    status: 'completed' as const,
   };
 }
 
 // Generate video with Runway Gen-2 or similar
 async function generateRunwayVideo(
   scene: BatchVideoRequest['scenes'][0],
-  settings?: BatchVideoRequest['settings']
+  settings?: BatchVideoRequest['settings'],
 ): Promise<VideoScene> {
   const apiKey = process.env.RUNWAY_API_KEY;
   
@@ -91,32 +86,26 @@ async function generateRunwayVideo(
     return {
       sceneId: scene.sceneId,
       videoUrl,
+      imageUrl: scene.imageUrl,
       duration: scene.duration,
-      status: 'completed',
-      metadata: {
-        provider: 'runway',
-        processingTime: data.processing_time || 30,
-      },
+      status: 'completed' as const,
     };
   } catch (error) {
     console.error(`Failed to generate video for scene ${scene.sceneId}:`, error);
     return {
       sceneId: scene.sceneId,
       videoUrl: '',
+      imageUrl: scene.imageUrl,
       duration: scene.duration,
-      status: 'error',
+      status: 'error' as const,
       error: error instanceof Error ? error.message : 'Failed to generate video',
-      metadata: {
-        provider: 'runway',
-        processingTime: 0,
-      },
     };
   }
 }
 
 // Alternative: Generate video with image animation (simpler approach)
 async function generateSimpleVideo(
-  scene: BatchVideoRequest['scenes'][0]
+  scene: BatchVideoRequest['scenes'][0],
 ): Promise<VideoScene> {
   // This would use FFmpeg or a similar tool to create a video from an image + audio
   // For now, return a mock result
@@ -124,12 +113,9 @@ async function generateSimpleVideo(
   return {
     sceneId: scene.sceneId,
     videoUrl: `https://storage.googleapis.com/evergreen-videos/simple-${scene.sceneId}.mp4`,
+    imageUrl: scene.imageUrl,
     duration: scene.duration,
-    status: 'completed',
-    metadata: {
-      provider: 'ffmpeg',
-      processingTime: 5,
-    },
+    status: 'completed' as const,
   };
 }
 
@@ -140,7 +126,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version',
   );
 
   if (req.method === 'OPTIONS') {
@@ -167,8 +153,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     updateProductionStage('video', {
       status: 'generating',
       progress: 0,
-      totalScenes: scenes.length,
-      generatedScenes: 0,
+      scenes: [],
       error: undefined,
     });
 
@@ -207,13 +192,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return {
             sceneId: scene.sceneId,
             videoUrl: '',
+            imageUrl: scene.imageUrl,
             duration: scene.duration,
             status: 'error' as const,
             error: error instanceof Error ? error.message : 'Failed to generate video',
-            metadata: {
-              provider: useRunway ? 'runway' : 'ffmpeg',
-              processingTime: 0,
-            },
           };
         }
       });
@@ -225,8 +207,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const progress = Math.round((videoResults.length / scenes.length) * 100);
       updateProductionStage('video', {
         progress,
-        generatedScenes: videoResults.length,
-        videoScenes: videoResults,
+        scenes: videoResults,
       });
       
       // Send progress update
@@ -268,9 +249,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     updateProductionStage('video', {
       status: 'completed',
       progress: 100,
-      videoScenes: videoResults,
-      successCount,
-      errorCount,
+      scenes: videoResults,
     });
 
     // Send completion notification

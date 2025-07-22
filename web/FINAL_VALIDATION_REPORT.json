@@ -1,0 +1,139 @@
+{
+  "timestamp": "2025-07-22T05:26:55.611Z",
+  "duration": "17001ms",
+  "overallScore": 14,
+  "categoryScores": {
+    "system": 71,
+    "performance": 0,
+    "security": 0,
+    "production": 0,
+    "userExperience": 0
+  },
+  "results": {
+    "system": {
+      "status": "complete",
+      "tests": [
+        {
+          "test": "API /api/health",
+          "status": "fail",
+          "details": "Request failed with status code 503",
+          "timestamp": "2025-07-22T05:26:38.711Z"
+        },
+        {
+          "test": "API /api/status",
+          "status": "pass",
+          "details": "Status: 200, Duration: 174ms",
+          "timestamp": "2025-07-22T05:26:38.885Z"
+        },
+        {
+          "test": "API /api/script/parse",
+          "status": "fail",
+          "details": "Request failed with status code 405",
+          "timestamp": "2025-07-22T05:26:39.176Z"
+        },
+        {
+          "test": "API /api/production/state",
+          "status": "pass",
+          "details": "Status: 200, Duration: 166ms",
+          "timestamp": "2025-07-22T05:26:39.342Z"
+        },
+        {
+          "test": "API /api/voice/list",
+          "status": "pass",
+          "details": "Status: 200, Duration: 185ms",
+          "timestamp": "2025-07-22T05:26:39.527Z"
+        },
+        {
+          "test": "Backend Connectivity",
+          "status": "pass",
+          "details": "Backend responded with status 200",
+          "timestamp": "2025-07-22T05:26:39.531Z"
+        },
+        {
+          "test": "WebSocket Support",
+          "status": "pass",
+          "details": "WebSocket endpoint configured",
+          "timestamp": "2025-07-22T05:26:39.531Z"
+        }
+      ]
+    },
+    "performance": {
+      "status": "pending",
+      "metrics": {
+        "/api/status_response_time": {
+          "value": 174,
+          "unit": "ms",
+          "threshold": 500,
+          "status": "pass"
+        },
+        "/api/production/state_response_time": {
+          "value": 166,
+          "unit": "ms",
+          "threshold": 500,
+          "status": "pass"
+        },
+        "/api/voice/list_response_time": {
+          "value": 185,
+          "unit": "ms",
+          "threshold": 500,
+          "status": "pass"
+        },
+        "avg_api_response_time": {
+          "value": 35,
+          "unit": "ms",
+          "threshold": 500,
+          "status": "pass"
+        },
+        "max_api_response_time": {
+          "value": 35,
+          "unit": "ms",
+          "threshold": 1000,
+          "status": "pass"
+        },
+        "memory_heap_used": {
+          "value": 9,
+          "unit": "MB",
+          "threshold": 512,
+          "status": "pass"
+        },
+        "memory_heap_total": {
+          "value": 17,
+          "unit": "MB",
+          "threshold": 1024,
+          "status": "pass"
+        }
+      }
+    },
+    "security": {
+      "status": "pending",
+      "issues": []
+    },
+    "production": {
+      "status": "pending",
+      "checks": []
+    },
+    "userExperience": {
+      "status": "pending",
+      "tests": []
+    }
+  },
+  "errors": [
+    {
+      "type": "performance_test_error",
+      "endpoint": "/api/health",
+      "message": "Request failed with status code 503"
+    },
+    {
+      "type": "validation_error",
+      "message": "Cannot read properties of undefined (reading 'push')",
+      "stack": "TypeError: Cannot read properties of undefined (reading 'push')\n    at ValidationReport.addResult (/mnt/c/Users/holla/OneDrive/Desktop/CodeProjects/Evergreen/web/final-system-validation.js:49:34)\n    at SystemValidator.testPerformance (/mnt/c/Users/holla/OneDrive/Desktop/CodeProjects/Evergreen/web/final-system-validation.js:279:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async SystemValidator.validateSystem (/mnt/c/Users/holla/OneDrive/Desktop/CodeProjects/Evergreen/web/final-system-validation.js:157:7)"
+    }
+  ],
+  "recommendations": [
+    {
+      "category": "production",
+      "priority": "high",
+      "message": "2 critical tests failing - not production ready"
+    }
+  ]
+}

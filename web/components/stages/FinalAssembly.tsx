@@ -49,10 +49,10 @@ export default function FinalAssembly({ onComplete }: FinalAssemblyProps) {
   const [currentTime, setCurrentTime] = useState(0);
   
   // Data from previous stages
-  const [scenes, setScenes] = useState<ScriptScene[]>([]);
-  const [audioData, setAudioData] = useState<Record<string, AudioData>>({});
-  const [imageData, setImageData] = useState<Record<string, ImageData>>({});
-  const [videoData, setVideoData] = useState<Record<string, VideoData>>({});
+  const [, setScenes] = useState<ScriptScene[]>([]);
+  const [, setAudioData] = useState<Record<string, AudioData>>({});
+  const [, setImageData] = useState<Record<string, ImageData>>({});
+  const [, setVideoData] = useState<Record<string, VideoData>>({});
   
   // Timeline state
   const [timelineItems, setTimelineItems] = useState<TimelineItem[]>([]);
@@ -66,7 +66,7 @@ export default function FinalAssembly({ onComplete }: FinalAssemblyProps) {
     quality: 'high',
     includeBackgroundMusic: false,
     musicVolume: 30,
-    narrationVolume: 100
+    narrationVolume: 100,
   });
   
   const [backgroundMusic, setBackgroundMusic] = useState<File | null>(null);
@@ -111,7 +111,7 @@ export default function FinalAssembly({ onComplete }: FinalAssemblyProps) {
             scene,
             audio: sceneAudio,
             image: sceneImage,
-            video: sceneVideo
+            video: sceneVideo,
           });
 
           currentStartTime += duration;
@@ -139,8 +139,8 @@ export default function FinalAssembly({ onComplete }: FinalAssemblyProps) {
       items.map(item =>
         item.id === itemId
           ? { ...item, transition, transitionDuration: duration }
-          : item
-      )
+          : item,
+      ),
     );
   };
 
@@ -178,10 +178,10 @@ export default function FinalAssembly({ onComplete }: FinalAssemblyProps) {
           imageUrl: item.image?.url,
           videoUrl: item.video?.url,
           narration: item.scene.narration,
-          onScreenText: item.scene.onScreenText
+          onScreenText: item.scene.onScreenText,
         })),
         settings: exportOptions,
-        totalDuration: calculateTotalDuration()
+        totalDuration: calculateTotalDuration(),
       };
 
       // Create FormData for file upload
@@ -198,7 +198,7 @@ export default function FinalAssembly({ onComplete }: FinalAssemblyProps) {
 
       const response = await fetch('/api/assembly/export', {
         method: 'POST',
-        body: formData
+        body: formData,
       });
 
       clearInterval(progressInterval);
@@ -216,7 +216,7 @@ export default function FinalAssembly({ onComplete }: FinalAssemblyProps) {
         localStorage.setItem('productionState', JSON.stringify({
           ...JSON.parse(localStorage.getItem('productionState') || '{}'),
           readyForAssembly: true,
-          completed: true
+          completed: true,
         }));
         onComplete();
       }
@@ -246,7 +246,7 @@ export default function FinalAssembly({ onComplete }: FinalAssemblyProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner />
       </div>
     );
   }

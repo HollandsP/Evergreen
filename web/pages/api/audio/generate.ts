@@ -32,7 +32,7 @@ const calculateDuration = (text: string): number => {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<GenerateAudioResponse | { error: string }>
+  res: NextApiResponse<GenerateAudioResponse | { error: string }>,
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -55,16 +55,16 @@ export default async function handler(
         headers: {
           'Accept': 'audio/mpeg',
           'Content-Type': 'application/json',
-          'xi-api-key': process.env.ELEVENLABS_API_KEY
+          'xi-api-key': process.env.ELEVENLABS_API_KEY,
         },
         body: JSON.stringify({
           text,
           model_id: 'eleven_monolingual_v1',
           voice_settings: {
             stability: 0.5,
-            similarity_boost: 0.75
-          }
-        })
+            similarity_boost: 0.75,
+          },
+        }),
       });
 
       if (!response.ok) {
@@ -81,7 +81,7 @@ export default async function handler(
       return res.status(200).json({
         audioUrl: `/api/audio/mock/${sceneId}.mp3`,
         duration,
-        sceneId
+        sceneId,
       });
     }
 
@@ -96,13 +96,13 @@ export default async function handler(
     return res.status(200).json({
       audioUrl: `/api/audio/mock/${sceneId}.mp3`,
       duration,
-      sceneId
+      sceneId,
     });
 
   } catch (error) {
     console.error('Audio generation error:', error);
     return res.status(500).json({ 
-      error: error instanceof Error ? error.message : 'Failed to generate audio' 
+      error: error instanceof Error ? error.message : 'Failed to generate audio', 
     });
   }
 }

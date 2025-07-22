@@ -60,7 +60,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     const [fields, files] = await form.parse(req);
-    const exportData: ExportData = JSON.parse(fields.exportData as string);
+    const exportDataString = Array.isArray(fields.exportData) ? fields.exportData[0] : fields.exportData;
+    if (!exportDataString) {
+      throw new Error('Export data is required');
+    }
+    const exportData: ExportData = JSON.parse(exportDataString as string);
     const backgroundMusic = files.backgroundMusic?.[0];
 
     // Prepare FFmpeg command based on export settings
@@ -72,14 +76,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const resolutionMap = {
       '4K': '3840x2160',
       '1080p': '1920x1080',
-      '720p': '1280x720'
+      '720p': '1280x720',
     };
 
     // Quality preset mapping
     const qualityMap = {
       high: { preset: 'slow', crf: 18 },
       medium: { preset: 'medium', crf: 23 },
-      low: { preset: 'fast', crf: 28 }
+      low: { preset: 'fast', crf: 28 },
     };
 
     // Step 1: Create video segments for each timeline item
@@ -118,7 +122,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           segmentFile,
           transitionFile,
           item.transition,
-          item.transitionDuration
+          item.transitionDuration,
         );
         videoSegments[videoSegments.length - 1] = transitionFile;
       }
@@ -167,7 +171,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     // Build filter complex for audio mixing
     let filterComplex = '';
-    let audioInputs = 1; // Start at 1 because video is input 0
+    // let audioInputs = 1; // Start at 1 because video is input 0
     
     if (audioFiles.length > 0 && backgroundMusic && exportData.settings.includeBackgroundMusic) {
       // Mix narration and background music
@@ -211,7 +215,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       jobId,
       downloadUrl,
       fileSize: (await fs.stat(outputFile)).size,
-      duration: exportData.totalDuration
+      duration: exportData.totalDuration,
     });
     
   } catch (error) {
@@ -226,7 +230,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     res.status(500).json({
       error: 'Export failed',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }
@@ -249,7 +253,7 @@ async function applyTransition(
   nextVideo: string,
   outputFile: string,
   transition: string,
-  duration: number
+  duration: number,
 ): Promise<void> {
   let filter = '';
   

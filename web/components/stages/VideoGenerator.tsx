@@ -9,7 +9,7 @@ import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Progress } from '../ui/progress';
 import { toast } from 'sonner';
-import { Play, Pause, Video, Wand2, Loader2, Check, Mic, Camera, Film, Zap } from 'lucide-react';
+import { Play, Video, Wand2, Loader2, Check, Camera, Film, Zap } from 'lucide-react';
 import AudioSyncTimeline from '../video/AudioSyncTimeline';
 import LipSyncControls from '../video/LipSyncControls';
 import { useRouter } from 'next/router';
@@ -40,7 +40,7 @@ export default function VideoGenerator({ onComplete }: VideoGeneratorProps) {
   const [selectedScene, setSelectedScene] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
-  const [batchMode, setBatchMode] = useState(false);
+  const [, setIsBatchMode] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -107,9 +107,9 @@ export default function VideoGenerator({ onComplete }: VideoGeneratorProps) {
     if (scene.type === 'dialogue' && scene.speaker) {
       return `${scene.speaker} speaking, natural facial expressions and lip movement, professional lighting`;
     } else if (scene.type === 'narrative') {
-      return `Cinematic scene, atmospheric lighting, subtle movement and atmosphere`;
+      return 'Cinematic scene, atmospheric lighting, subtle movement and atmosphere';
     } else if (scene.type === 'transition') {
-      return `Smooth transitional movement, elegant motion design`;
+      return 'Smooth transitional movement, elegant motion design';
     }
     return 'Cinematic scene with subtle movement';
   };
@@ -117,7 +117,7 @@ export default function VideoGenerator({ onComplete }: VideoGeneratorProps) {
   // Update scene data
   const updateScene = (sceneId: string, updates: Partial<Scene>) => {
     setScenes(prev => prev.map(scene => 
-      scene.id === sceneId ? { ...scene, ...updates } : scene
+      scene.id === sceneId ? { ...scene, ...updates } : scene,
     ));
   };
 
@@ -145,7 +145,7 @@ export default function VideoGenerator({ onComplete }: VideoGeneratorProps) {
       const data = await response.json();
       updateScene(scene.id, { 
         videoUrl: data.videoUrl, 
-        videoStatus: 'completed' 
+        videoStatus: 'completed', 
       });
 
       toast.success(`Video generated for scene ${scene.id}`);
@@ -161,6 +161,7 @@ export default function VideoGenerator({ onComplete }: VideoGeneratorProps) {
   // Generate all videos in batch
   const generateAllVideos = async () => {
     setIsGenerating(true);
+    setIsBatchMode(true);
     setGenerationProgress(0);
 
     try {
@@ -197,6 +198,7 @@ export default function VideoGenerator({ onComplete }: VideoGeneratorProps) {
       toast.error('Some videos failed to generate');
     } finally {
       setIsGenerating(false);
+      setIsBatchMode(false);
       setGenerationProgress(0);
     }
   };
@@ -455,7 +457,7 @@ export default function VideoGenerator({ onComplete }: VideoGeneratorProps) {
           </div>
 
           {/* Generation Progress */}
-          {isGenerating && batchMode && (
+          {isGenerating && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Generating videos...</span>

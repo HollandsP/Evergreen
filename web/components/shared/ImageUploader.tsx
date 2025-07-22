@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { CloudArrowUpIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { CloudArrowUpIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 
 interface ImageUploaderProps {
@@ -16,7 +16,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   onUpload,
   onCancel,
   acceptedFormats = DEFAULT_FORMATS,
-  maxSizeMB = DEFAULT_MAX_SIZE
+  maxSizeMB = DEFAULT_MAX_SIZE,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -122,10 +122,10 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             className={cn(
-              "relative border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200",
+              'relative border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200',
               isDragging 
-                ? "border-primary-500 bg-primary-50" 
-                : "border-gray-300 hover:border-gray-400 bg-white"
+                ? 'border-primary-500 bg-primary-50' 
+                : 'border-gray-300 hover:border-gray-400 bg-white',
             )}
           >
             <input
@@ -137,8 +137,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             />
             
             <CloudArrowUpIcon className={cn(
-              "mx-auto h-12 w-12 transition-colors",
-              isDragging ? "text-primary-500" : "text-gray-400"
+              'mx-auto h-12 w-12 transition-colors',
+              isDragging ? 'text-primary-500' : 'text-gray-400',
             )} />
             
             <p className="mt-2 text-sm text-gray-600">

@@ -22,14 +22,14 @@ export default function ExportSettings({
   options,
   onChange,
   totalDuration,
-  sceneCount
+  sceneCount,
 }: ExportSettingsProps) {
   const estimateFileSize = () => {
     // Rough estimation based on settings
     const baseRate = {
       '4K': { high: 60, medium: 40, low: 25 },
       '1080p': { high: 15, medium: 10, low: 6 },
-      '720p': { high: 8, medium: 5, low: 3 }
+      '720p': { high: 8, medium: 5, low: 3 },
     };
 
     const rate = baseRate[options.resolution][options.quality];
@@ -43,13 +43,13 @@ export default function ExportSettings({
     const complexityFactor = {
       '4K': 3,
       '1080p': 1.5,
-      '720p': 1
+      '720p': 1,
     };
 
     const qualityFactor = {
       high: 2,
       medium: 1.5,
-      low: 1
+      low: 1,
     };
 
     const baseTime = totalDuration * 0.5; // 30 seconds processing per minute of video
@@ -65,25 +65,25 @@ export default function ExportSettings({
   const formatOptions = [
     { value: 'mp4', label: 'MP4', description: 'Universal compatibility' },
     { value: 'mov', label: 'MOV', description: 'High quality, larger files' },
-    { value: 'webm', label: 'WebM', description: 'Web optimized' }
+    { value: 'webm', label: 'WebM', description: 'Web optimized' },
   ];
 
   const resolutionOptions = [
     { value: '4K', label: '4K (3840×2160)', description: 'Ultra HD quality' },
     { value: '1080p', label: '1080p (1920×1080)', description: 'Full HD, recommended' },
-    { value: '720p', label: '720p (1280×720)', description: 'HD, smaller files' }
+    { value: '720p', label: '720p (1280×720)', description: 'HD, smaller files' },
   ];
 
   const frameRateOptions = [
     { value: 24, label: '24 fps', description: 'Cinematic look' },
     { value: 30, label: '30 fps', description: 'Standard video' },
-    { value: 60, label: '60 fps', description: 'Smooth motion' }
+    { value: 60, label: '60 fps', description: 'Smooth motion' },
   ];
 
   const qualityOptions = [
     { value: 'high', label: 'High', description: 'Best quality, larger files' },
     { value: 'medium', label: 'Medium', description: 'Balanced quality and size' },
-    { value: 'low', label: 'Low', description: 'Smaller files, faster export' }
+    { value: 'low', label: 'Low', description: 'Smaller files, faster export' },
   ];
 
   return (

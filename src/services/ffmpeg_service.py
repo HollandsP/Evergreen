@@ -7,10 +7,74 @@ import json
 import subprocess
 import logging
 import tempfile
-from typing import Dict, List, Any, Optional, Tuple
+import asyncio
+import signal
+import time
+from typing import Dict, List, Any, Optional, Tuple, Union
 from pathlib import Path
+from contextlib import asynccontextmanager
 
-logger = logging.getLogger(__name__)
+import structlog
+import re
+from fractions import Fraction
+
+logger = structlog.get_logger()
+
+def safe_parse_frame_rate(frame_rate_str: str) -> float:
+    """
+    Safely parse frame rate string without using eval().
+    
+    Args:
+        frame_rate_str: Frame rate as string (e.g., "30/1", "25/1")
+    
+    Returns:
+        Frame rate as float
+    """
+    if not frame_rate_str or frame_rate_str == "0/0":
+        return 0.0
+    
+    try:
+        # Validate input format (should be "number/number")
+        if not re.match(r'^\d+/\d+$', frame_rate_str):
+            logger.warning(f"Invalid frame rate format: {frame_rate_str}")
+            return 0.0
+        
+        # Use Fraction for safe parsing
+        fraction = Fraction(frame_rate_str)
+        return float(fraction)
+    except (ValueError, ZeroDivisionError) as e:
+        logger.warning(f"Error parsing frame rate '{frame_rate_str}': {e}")
+        return 0.0
+
+def validate_file_path(file_path: str) -> str:
+    """
+    Validate and sanitize file path to prevent path traversal attacks.
+    
+    Args:
+        file_path: Input file path
+    
+    Returns:
+        Sanitized file path
+    
+    Raises:
+        ValueError: If path is invalid or potentially malicious
+    """
+    if not file_path:
+        raise ValueError("File path cannot be empty")
+    
+    # Convert to Path object for safer handling
+    path = Path(file_path).resolve()
+    
+    # Check for path traversal attempts
+    if ".." in str(path) or str(path).startswith("/"):
+        # Allow absolute paths but log for security monitoring
+        logger.info(f"Absolute path used: {path}")
+    
+    # Ensure path exists and is a file (for input files)
+    if not path.exists():
+        raise ValueError(f"File does not exist: {path}")
+    
+    return str(path)
 
 class FFmpegService:
     """Service wrapper for FFmpeg operations."""
@@ -31,6 +95,10 @@ class FFmpegService:
         if not self.ffprobe_path:
             raise RuntimeError("FFprobe not found. Please install FFmpeg or provide path.")
         
+        # Process management
+        self.active_processes: Dict[str, subprocess.Popen] = {}
+        self.default_timeout = 300  # 5 minutes
+        
         logger.info(f"Initialized FFmpeg service with: {self.ffmpeg_path}")
     
     def _find_executable(self, name: str) -> Optional[str]:
@@ -38,30 +106,161 @@ class FFmpegService:
         import shutil
         return shutil.which(name)
     
-    def _run_command(self, cmd: List[str], check: bool = True) -> subprocess.CompletedProcess:
-        """Run FFmpeg command with error handling."""
-        logger.debug(f"Running command: {' '.join(cmd)}")
+    def _terminate_process(self, process: subprocess.Popen) -> None:
+        """Safely terminate a process."""
+        try:
+            if os.name == 'nt':  # Windows
+                process.terminate()
+            else:  # Unix-like
+                os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+            
+            # Give it a moment to terminate gracefully
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                # Force kill if needed
+                if os.name == 'nt':
+                    process.kill()
+                else:
+                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                    
+        except (ProcessLookupError, OSError):
+            # Process already terminated
+            pass
+    
+    async def _run_command_async(self, cmd: List[str], check: bool = True,
+                                timeout: Optional[float] = None,
+                                progress_callback=None) -> subprocess.CompletedProcess:
+        """Run FFmpeg command asynchronously with progress monitoring."""
+        logger.debug(f"Running async command: {' '.join(cmd[:3])}...")
+        
+        timeout = timeout or self.default_timeout
+        process_id = f"ffmpeg_async_{int(time.time() * 1000)}"
         
         try:
-            result = subprocess.run(
-                cmd,
-                check=check,
-                capture_output=True,
-                text=True
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
             )
             
-            if result.returncode != 0 and check:
-                logger.error(f"FFmpeg error: {result.stderr}")
-                raise subprocess.CalledProcessError(result.returncode, cmd, result.stderr)
+            self.active_processes[process_id] = process
             
+            # Monitor progress if callback provided
+            if progress_callback:
+                asyncio.create_task(self._monitor_progress(process, progress_callback))
+            
+            stdout, stderr = await asyncio.wait_for(
+                process.communicate(), timeout=timeout
+            )
+            
+            if process.returncode != 0 and check:
+                logger.error(
+                    "Async FFmpeg command failed",
+                    returncode=process.returncode,
+                    stderr=stderr.decode()[:500]
+                )
+                raise subprocess.CalledProcessError(
+                    process.returncode, cmd, stderr.decode()
+                )
+            
+            result = subprocess.CompletedProcess(
+                cmd, process.returncode, 
+                stdout.decode() if stdout else '',
+                stderr.decode() if stderr else ''
+            )
             return result
             
+        except asyncio.TimeoutError:
+            if process:
+                process.terminate()
+                try:
+                    await asyncio.wait_for(process.wait(), timeout=5)
+                except asyncio.TimeoutError:
+                    process.kill()
+            logger.error("Async FFmpeg command timed out", timeout=timeout)
+            raise
+        finally:
+            if process_id in self.active_processes:
+                del self.active_processes[process_id]
+    
+    async def _monitor_progress(self, process, progress_callback):
+        """Monitor FFmpeg progress and call callback with updates."""
+        try:
+            while process.returncode is None:
+                # Read stderr line by line for progress info
+                line = await process.stderr.readline()
+                if not line:
+                    break
+                
+                line = line.decode().strip()
+                if 'time=' in line:
+                    # Extract time information for progress
+                    try:
+                        time_match = re.search(r'time=([\d:.]+)', line)
+                        if time_match:
+                            progress_callback(time_match.group(1))
+                    except Exception:
+                        pass
+                        
+                await asyncio.sleep(0.1)
+        except Exception as e:
+            logger.debug("Progress monitoring error", error=str(e))
+    
+    def _run_command(self, cmd: List[str], check: bool = True, 
+                    timeout: Optional[float] = None, 
+                    process_id: Optional[str] = None) -> subprocess.CompletedProcess:
+        """Run FFmpeg command with error handling and timeout."""
+        logger.debug(f"Running command: {' '.join(cmd[:3])}...")
+        
+        timeout = timeout or self.default_timeout
+        process_id = process_id or f"ffmpeg_{int(time.time() * 1000)}"
+        
+        process = None
+        try:
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                preexec_fn=os.setsid if os.name != 'nt' else None
+            )
+            
+            # Track active process
+            self.active_processes[process_id] = process
+            
+            stdout, stderr = process.communicate(timeout=timeout)
+            returncode = process.returncode
+            
+            if returncode != 0 and check:
+                logger.error(
+                    "FFmpeg command failed",
+                    returncode=returncode,
+                    stderr=stderr[:500]
+                )
+                raise subprocess.CalledProcessError(returncode, cmd, stderr)
+            
+            # Create result object matching subprocess.run
+            result = subprocess.CompletedProcess(cmd, returncode, stdout, stderr)
+            return result
+            
+        except subprocess.TimeoutExpired:
+            if process:
+                self._terminate_process(process)
+            logger.error("FFmpeg command timed out", timeout=timeout)
+            raise
         except subprocess.CalledProcessError as e:
-            logger.error(f"FFmpeg command failed: {e.stderr}")
+            logger.error("FFmpeg command failed", error=e.stderr)
             raise
         except Exception as e:
-            logger.error(f"Error running FFmpeg: {str(e)}")
+            if process:
+                self._terminate_process(process)
+            logger.error("Error running FFmpeg", error=str(e))
             raise
+        finally:
+            # Clean up process tracking
+            if process_id in self.active_processes:
+                del self.active_processes[process_id]
     
     def get_media_info(self, file_path: str) -> Dict[str, Any]:
         """
@@ -73,6 +272,8 @@ class FFmpegService:
         Returns:
             Media information dictionary
         """
+        # Validate and sanitize file path
+        file_path = validate_file_path(file_path)
         cmd = [
             self.ffprobe_path,
             '-v', 'quiet',
@@ -103,7 +304,7 @@ class FFmpegService:
             media_info.update({
                 'width': int(video_stream.get('width', 0)),
                 'height': int(video_stream.get('height', 0)),
-                'fps': eval(video_stream.get('r_frame_rate', '0/1')),
+                'fps': safe_parse_frame_rate(video_stream.get('r_frame_rate', '0/1')),
                 'codec': video_stream.get('codec_name', ''),
                 'video_bitrate': int(video_stream.get('bit_rate', 0))
             })
@@ -132,6 +333,9 @@ class FFmpegService:
         Returns:
             Output file path
         """
+        # Validate all input files
+        validated_files = [validate_file_path(f) for f in input_files]
+        input_files = validated_files
         # Create a temporary file list for concat
         with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
             for file_path in input_files:

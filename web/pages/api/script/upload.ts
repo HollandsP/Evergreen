@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import formidable from 'formidable';
 import fs from 'fs/promises';
-import path from 'path';
+// import path from 'path';
 import { updateProductionStage } from '@/lib/production-state';
 
 export const config = {
@@ -10,10 +10,10 @@ export const config = {
   },
 };
 
-interface ParsedForm {
-  fields: formidable.Fields;
-  files: formidable.Files;
-}
+// interface ParsedForm {
+//   fields: formidable.Fields;
+//   files: formidable.Files;
+// }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Enable CORS
@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version',
   );
 
   if (req.method === 'OPTIONS') {
@@ -61,7 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
-    const [fields, files] = await form.parse(req);
+    const [, files] = await form.parse(req);
     
     const file = Array.isArray(files.file) ? files.file[0] : files.file;
     

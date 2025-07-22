@@ -37,7 +37,7 @@ const cameraMovementPrompts: Record<string, string> = {
 };
 
 // Generate mock video URL based on parameters
-const generateMockVideoUrl = (params: VideoGenerationRequest): string => {
+const generateMockVideoUrl = (_params: VideoGenerationRequest): string => {
   const timestamp = Date.now();
   const videoId = `video_${timestamp}_${Math.random().toString(36).substr(2, 9)}`;
   
@@ -56,7 +56,7 @@ const simulateProcessing = async (duration: number): Promise<void> => {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<VideoGenerationResponse | { error: string }>
+  res: NextApiResponse<VideoGenerationResponse | { error: string }>,
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -76,14 +76,14 @@ export default async function handler(
     // Validate required parameters
     if (!imageUrl || !prompt || !duration) {
       return res.status(400).json({ 
-        error: 'Missing required parameters: imageUrl, prompt, and duration' 
+        error: 'Missing required parameters: imageUrl, prompt, and duration', 
       });
     }
 
     // Validate duration (Runway Gen-4 supports up to 10 seconds)
     if (duration < 1 || duration > 10) {
       return res.status(400).json({ 
-        error: 'Duration must be between 1 and 10 seconds' 
+        error: 'Duration must be between 1 and 10 seconds', 
       });
     }
 
@@ -97,8 +97,8 @@ export default async function handler(
 
     // Add motion intensity
     const intensityDescriptor = motionIntensity < 30 ? 'subtle' : 
-                               motionIntensity < 70 ? 'moderate' : 
-                               'dynamic';
+      motionIntensity < 70 ? 'moderate' : 
+        'dynamic';
     fullPrompt += `, ${intensityDescriptor} motion`;
 
     // Add lip sync instructions if enabled
@@ -156,7 +156,7 @@ export default async function handler(
   } catch (error) {
     console.error('Video generation error:', error);
     res.status(500).json({ 
-      error: 'Failed to generate video. Please try again.' 
+      error: 'Failed to generate video. Please try again.', 
     });
   }
 }

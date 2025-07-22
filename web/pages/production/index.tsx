@@ -10,8 +10,16 @@ export default function ProductionDashboard() {
   const router = useRouter();
 
   useEffect(() => {
+    // Initialize WebSocket connection for production updates
+    wsManager.connect();
+    
     // Redirect to first stage
     router.push('/production/script');
+    
+    return () => {
+      // Cleanup WebSocket on unmount
+      wsManager.disconnect();
+    };
   }, [router]);
 
   return (

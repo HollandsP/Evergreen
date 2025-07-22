@@ -11,7 +11,7 @@ export default function VideosPage() {
   };
 
   return (
-    <ProductionLayout currentStage="videos">
+    <ProductionLayout currentStage="videos" title="Video Generation">
       <VideoGenerator onComplete={handleComplete} />
     </ProductionLayout>
   );

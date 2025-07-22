@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Film, Image, Volume2, Scissors, Move, Play } from 'lucide-react';
 
 interface TimelineItem {
@@ -34,9 +34,9 @@ export default function TimelineEditor({
   onItemsChange,
   onItemSelect,
   onTransitionChange,
-  onTimeChange
+  onTimeChange,
 }: TimelineEditorProps) {
-  const [isDragging, setIsDragging] = useState(false);
+  const [, setIsDragging] = useState(false);
   const [draggedItem, setDraggedItem] = useState<TimelineItem | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [pixelsPerSecond, setPixelsPerSecond] = useState(10);
@@ -44,7 +44,7 @@ export default function TimelineEditor({
   const timelineRef = useRef<HTMLDivElement>(null);
   const playheadRef = useRef<HTMLDivElement>(null);
 
-  const handleDragStart = (e: React.DragEvent, item: TimelineItem, index: number) => {
+  const handleDragStart = (e: React.DragEvent, item: TimelineItem) => {
     setIsDragging(true);
     setDraggedItem(item);
     e.dataTransfer.effectAllowed = 'move';
@@ -179,7 +179,7 @@ export default function TimelineEditor({
                 <div
                   key={item.id}
                   draggable
-                  onDragStart={(e) => handleDragStart(e, item, index)}
+                  onDragStart={(e) => handleDragStart(e, item)}
                   onDragOver={(e) => handleDragOver(e, index)}
                   onDragEnd={handleDragEnd}
                   onDrop={(e) => handleDrop(e, index)}
@@ -193,7 +193,7 @@ export default function TimelineEditor({
                   }`}
                   style={{
                     left: `${item.startTime * pixelsPerSecond}px`,
-                    width: `${item.duration * pixelsPerSecond}px`
+                    width: `${item.duration * pixelsPerSecond}px`,
                   }}
                 >
                   <div className="flex items-center h-full px-2 text-white text-xs">
@@ -219,7 +219,7 @@ export default function TimelineEditor({
                     className="absolute top-2 h-12 bg-green-500 rounded opacity-75"
                     style={{
                       left: `${item.startTime * pixelsPerSecond}px`,
-                      width: `${item.duration * pixelsPerSecond}px`
+                      width: `${item.duration * pixelsPerSecond}px`,
                     }}
                   >
                     <div className="flex items-center h-full px-2 text-white text-xs">

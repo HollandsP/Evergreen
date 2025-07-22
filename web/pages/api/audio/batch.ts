@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ScriptScene, AudioData } from '@/types';
 import { updateProductionStage } from '@/lib/production-state';
-import { v4 as uuidv4 } from 'uuid';
+// import { v4 as uuidv4 } from 'uuid';
 
 interface BatchAudioRequest {
   scenes: ScriptScene[];
@@ -42,7 +42,7 @@ async function generateMockAudio(scene: ScriptScene): Promise<AudioData> {
 async function generateElevenLabsAudio(
   scene: ScriptScene,
   voiceId: string,
-  settings?: BatchAudioRequest['settings']
+  settings?: BatchAudioRequest['settings'],
 ): Promise<AudioData> {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   
@@ -70,7 +70,7 @@ async function generateElevenLabsAudio(
             use_speaker_boost: settings?.use_speaker_boost ?? true,
           },
         }),
-      }
+      },
     );
     
     if (!response.ok) {
@@ -80,8 +80,8 @@ async function generateElevenLabsAudio(
     
     // In production, you would upload the audio to S3 or similar
     // For now, we'll return a mock URL
-    const audioBlob = await response.blob();
-    const audioBuffer = await audioBlob.arrayBuffer();
+    // const audioBlob = await response.blob();
+    // const audioBuffer = await audioBlob.arrayBuffer();
     
     // Calculate actual duration (would need audio processing library in production)
     const words = scene.narration.split(/\s+/).length;
@@ -115,7 +115,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version',
   );
 
   if (req.method === 'OPTIONS') {
@@ -146,8 +146,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     updateProductionStage('audio', {
       status: 'generating',
       progress: 0,
-      totalScenes: scenes.length,
-      generatedScenes: 0,
+      generatedAudio: [],
+      totalDuration: 0,
       error: undefined,
     });
 
@@ -171,7 +171,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const batchPromises = batch.map(scene => 
         useMockData 
           ? generateMockAudio(scene)
-          : generateElevenLabsAudio(scene, voiceId, settings)
+          : generateElevenLabsAudio(scene, voiceId, settings),
       );
       
       const batchResults = await Promise.all(batchPromises);
@@ -181,7 +181,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const progress = Math.round((audioResults.length / scenes.length) * 100);
       updateProductionStage('audio', {
         progress,
-        generatedScenes: audioResults.length,
+        generatedAudio: audioResults,
+        totalDuration: audioResults.reduce((sum, audio) => sum + audio.duration, 0),
       });
       
       // Send progress update
@@ -215,10 +216,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     updateProductionStage('audio', {
       status: 'completed',
       progress: 100,
-      audioData: audioResults,
+      generatedAudio: audioResults,
       totalDuration,
-      successCount,
-      errorCount,
     });
 
     // Send completion notification

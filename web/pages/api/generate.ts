@@ -6,7 +6,7 @@ import { GenerationRequest, GenerationJob } from '@/types';
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<GenerationJob | { error: string }>
+  res: NextApiResponse<GenerationJob | { error: string }>,
 ) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
@@ -38,7 +38,7 @@ export default async function handler(
         imageSize: request.settings.imageSize,
         videoDuration: request.settings.videoDuration,
         quality: request.settings.quality,
-      }
+      },
     };
 
     // In a real implementation, this would:

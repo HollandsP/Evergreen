@@ -1,5 +1,4 @@
 import { io, Socket } from 'socket.io-client';
-import { WebSocketMessage } from '@/types';
 
 class WebSocketManager {
   private socket: Socket | null = null;
@@ -15,13 +14,23 @@ class WebSocketManager {
       return;
     }
 
-    this.socket = io(socketUrl, {
-      transports: ['websocket', 'polling'],
-      timeout: 20000,
-      forceNew: true,
-    });
+    try {
+      this.socket = io(socketUrl, {
+        transports: ['websocket', 'polling'],
+        timeout: 20000,
+        forceNew: true,
+        autoConnect: true,
+        reconnection: true,
+        reconnectionAttempts: this.maxReconnectAttempts,
+        reconnectionDelay: this.reconnectDelay,
+        reconnectionDelayMax: 10000,
+      });
 
-    this.setupEventHandlers();
+      this.setupEventHandlers();
+    } catch (error) {
+      console.error('Failed to create WebSocket connection:', error);
+      this.emit('connection_error', { error });
+    }
   }
 
   private setupEventHandlers(): void {

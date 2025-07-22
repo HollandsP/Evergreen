@@ -3,7 +3,7 @@ import { SystemStatus } from '@/types';
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<SystemStatus | { error: string }>
+  res: NextApiResponse<SystemStatus | { error: string }>,
 ) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', ['GET']);

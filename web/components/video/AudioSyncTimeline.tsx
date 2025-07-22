@@ -24,7 +24,7 @@ interface AudioSyncTimelineProps {
 export default function AudioSyncTimeline({ 
   scenes, 
   selectedScene, 
-  onSceneSelect 
+  onSceneSelect, 
 }: AudioSyncTimelineProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -144,10 +144,10 @@ export default function AudioSyncTimeline({
                 <div
                   key={scene.id}
                   className={cn(
-                    "absolute top-0 h-full cursor-pointer transition-all duration-200 rounded-md border-2",
-                    isSelected ? "border-primary z-10" : "border-border",
-                    isHovered && !isSelected && "border-primary/50",
-                    scene.videoStatus === 'completed' ? "bg-green-500/20" : "bg-muted"
+                    'absolute top-0 h-full cursor-pointer transition-all duration-200 rounded-md border-2',
+                    isSelected ? 'border-primary z-10' : 'border-border',
+                    isHovered && !isSelected && 'border-primary/50',
+                    scene.videoStatus === 'completed' ? 'bg-green-500/20' : 'bg-muted',
                   )}
                   style={{
                     left: `${position}px`,

@@ -1,15 +1,15 @@
-import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { ScriptProcessor } from '@/components/stages/ScriptProcessor'
-import { AudioGenerator } from '@/components/stages/AudioGenerator'
-import { ImageGenerator } from '@/components/stages/ImageGenerator'
-import { VideoGenerator } from '@/components/stages/VideoGenerator'
-import { FinalAssembly } from '@/components/stages/FinalAssembly'
-import { productionState } from '@/lib/production-state'
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { ScriptProcessor } from '@/components/stages/ScriptProcessor';
+import { AudioGenerator } from '@/components/stages/AudioGenerator';
+import { ImageGenerator } from '@/components/stages/ImageGenerator';
+import { VideoGenerator } from '@/components/stages/VideoGenerator';
+import { FinalAssembly } from '@/components/stages/FinalAssembly';
+import { productionState } from '@/lib/production-state';
 
 // Mock fetch
-const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>
+const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
 
 // Mock router
 jest.mock('next/router', () => ({
@@ -17,28 +17,28 @@ jest.mock('next/router', () => ({
     push: jest.fn(),
     pathname: '/production/script',
   }),
-}))
+}));
 
 describe('Stage Components', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
-    productionState.reset()
-  })
+    jest.clearAllMocks();
+    productionState.reset();
+  });
 
   describe('ScriptProcessor', () => {
     it('should handle file upload and parsing', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup();
       
-      render(<ScriptProcessor />)
+      render(<ScriptProcessor />);
       
       // Check initial state
-      expect(screen.getByText(/Upload Script/i)).toBeInTheDocument()
-      expect(screen.getByText(/Drop your script file here or click to browse/i)).toBeInTheDocument()
+      expect(screen.getByText(/Upload Script/i)).toBeInTheDocument();
+      expect(screen.getByText(/Drop your script file here or click to browse/i)).toBeInTheDocument();
       
       // Create a test file
       const file = new File(['Test script content'], 'test-script.txt', {
         type: 'text/plain',
-      })
+      });
       
       // Mock successful API response
       mockFetch.mockResolvedValueOnce({
@@ -60,11 +60,11 @@ describe('Stage Components', () => {
           ],
           totalDuration: 10,
         }),
-      } as Response)
+      } as Response);
       
       // Upload file
-      const input = screen.getByLabelText(/upload script/i)
-      await user.upload(input, file)
+      const input = screen.getByLabelText(/upload script/i);
+      await user.upload(input, file);
       
       // Wait for upload and parsing
       await waitFor(() => {
@@ -73,48 +73,48 @@ describe('Stage Components', () => {
           expect.objectContaining({
             method: 'POST',
             body: expect.any(FormData),
-          })
-        )
-      })
+          }),
+        );
+      });
       
       // Check if scenes are displayed
       await waitFor(() => {
-        expect(screen.getByText(/Scene 1/i)).toBeInTheDocument()
-        expect(screen.getByText(/Test narration/i)).toBeInTheDocument()
-      })
-    })
+        expect(screen.getByText(/Scene 1/i)).toBeInTheDocument();
+        expect(screen.getByText(/Test narration/i)).toBeInTheDocument();
+      });
+    });
 
     it('should display parsing progress', async () => {
-      render(<ScriptProcessor />)
+      render(<ScriptProcessor />);
       
       // Update state to show parsing progress
       productionState.updateStage('script', {
         status: 'parsing',
         parseProgress: 50,
         fileName: 'test-script.txt',
-      })
+      });
       
       await waitFor(() => {
-        expect(screen.getByText(/Parsing script/i)).toBeInTheDocument()
-        expect(screen.getByText(/50%/)).toBeInTheDocument()
-      })
-    })
+        expect(screen.getByText(/Parsing script/i)).toBeInTheDocument();
+        expect(screen.getByText(/50%/)).toBeInTheDocument();
+      });
+    });
 
     it('should handle parsing errors', async () => {
-      render(<ScriptProcessor />)
+      render(<ScriptProcessor />);
       
       productionState.updateStage('script', {
         status: 'error',
         error: 'Invalid script format',
-      })
+      });
       
       await waitFor(() => {
-        expect(screen.getByText(/Invalid script format/i)).toBeInTheDocument()
-      })
-    })
+        expect(screen.getByText(/Invalid script format/i)).toBeInTheDocument();
+      });
+    });
 
     it('should allow scene editing', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup();
       
       productionState.updateStage('script', {
         status: 'completed',
@@ -132,27 +132,27 @@ describe('Stage Components', () => {
             },
           },
         ],
-      })
+      });
       
-      render(<ScriptProcessor />)
+      render(<ScriptProcessor />);
       
       // Find and click edit button
-      const editButton = screen.getByRole('button', { name: /edit/i })
-      await user.click(editButton)
+      const editButton = screen.getByRole('button', { name: /edit/i });
+      await user.click(editButton);
       
       // Edit narration
-      const narrationInput = screen.getByLabelText(/narration/i)
-      await user.clear(narrationInput)
-      await user.type(narrationInput, 'Updated narration')
+      const narrationInput = screen.getByLabelText(/narration/i);
+      await user.clear(narrationInput);
+      await user.type(narrationInput, 'Updated narration');
       
       // Save changes
-      const saveButton = screen.getByRole('button', { name: /save/i })
-      await user.click(saveButton)
+      const saveButton = screen.getByRole('button', { name: /save/i });
+      await user.click(saveButton);
       
       // Verify changes
-      expect(screen.getByText(/Updated narration/i)).toBeInTheDocument()
-    })
-  })
+      expect(screen.getByText(/Updated narration/i)).toBeInTheDocument();
+    });
+  });
 
   describe('AudioGenerator', () => {
     beforeEach(() => {
@@ -177,24 +177,24 @@ describe('Stage Components', () => {
             metadata: {} as any,
           },
         ],
-      })
+      });
       
       productionState.updateStage('voice', {
         status: 'completed',
         selectedVoiceId: 'test_voice',
         selectedVoiceName: 'Test Voice',
-      })
-    })
+      });
+    });
 
     it('should display scenes for audio generation', () => {
-      render(<AudioGenerator />)
+      render(<AudioGenerator />);
       
-      expect(screen.getByText(/Test narration 1/i)).toBeInTheDocument()
-      expect(screen.getByText(/Test narration 2/i)).toBeInTheDocument()
-    })
+      expect(screen.getByText(/Test narration 1/i)).toBeInTheDocument();
+      expect(screen.getByText(/Test narration 2/i)).toBeInTheDocument();
+    });
 
     it('should handle batch audio generation', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup();
       
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -205,39 +205,39 @@ describe('Stage Components', () => {
             { sceneId: 'scene_2', url: '/audio/2.mp3', duration: 4 },
           ],
         }),
-      } as Response)
+      } as Response);
       
-      render(<AudioGenerator />)
+      render(<AudioGenerator />);
       
-      const generateButton = screen.getByRole('button', { name: /generate all audio/i })
-      await user.click(generateButton)
+      const generateButton = screen.getByRole('button', { name: /generate all audio/i });
+      await user.click(generateButton);
       
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
           expect.stringContaining('/api/audio/batch'),
           expect.objectContaining({
             method: 'POST',
-          })
-        )
-      })
-    })
+          }),
+        );
+      });
+    });
 
     it('should show progress during generation', async () => {
-      render(<AudioGenerator />)
+      render(<AudioGenerator />);
       
       productionState.updateStage('audio', {
         status: 'generating',
         progress: 75,
-      })
+      });
       
       await waitFor(() => {
-        expect(screen.getByText(/75%/)).toBeInTheDocument()
-        expect(screen.getByText(/Generating audio/i)).toBeInTheDocument()
-      })
-    })
+        expect(screen.getByText(/75%/)).toBeInTheDocument();
+        expect(screen.getByText(/Generating audio/i)).toBeInTheDocument();
+      });
+    });
 
     it('should allow individual scene regeneration', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup();
       
       productionState.updateStage('audio', {
         status: 'completed',
@@ -245,7 +245,7 @@ describe('Stage Components', () => {
           { sceneId: 'scene_1', url: '/audio/1.mp3', duration: 3, status: 'completed' },
           { sceneId: 'scene_2', url: '', duration: 0, status: 'error', error: 'Failed' },
         ],
-      })
+      });
       
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -254,13 +254,13 @@ describe('Stage Components', () => {
           url: '/audio/2.mp3',
           duration: 4,
         }),
-      } as Response)
+      } as Response);
       
-      render(<AudioGenerator />)
+      render(<AudioGenerator />);
       
       // Find and click regenerate button for failed scene
-      const regenerateButtons = screen.getAllByRole('button', { name: /regenerate/i })
-      await user.click(regenerateButtons[0])
+      const regenerateButtons = screen.getAllByRole('button', { name: /regenerate/i });
+      await user.click(regenerateButtons[0]);
       
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
@@ -268,11 +268,11 @@ describe('Stage Components', () => {
           expect.objectContaining({
             method: 'POST',
             body: expect.stringContaining('scene_2'),
-          })
-        )
-      })
-    })
-  })
+          }),
+        );
+      });
+    });
+  });
 
   describe('ImageGenerator', () => {
     beforeEach(() => {
@@ -288,18 +288,18 @@ describe('Stage Components', () => {
             metadata: {} as any,
           },
         ],
-      })
-    })
+      });
+    });
 
     it('should display image generation options', () => {
-      render(<ImageGenerator />)
+      render(<ImageGenerator />);
       
-      expect(screen.getByText(/DALL-E 3/i)).toBeInTheDocument()
-      expect(screen.getByText(/Upload Images/i)).toBeInTheDocument()
-    })
+      expect(screen.getByText(/DALL-E 3/i)).toBeInTheDocument();
+      expect(screen.getByText(/Upload Images/i)).toBeInTheDocument();
+    });
 
     it('should handle DALL-E 3 generation', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup();
       
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -314,17 +314,17 @@ describe('Stage Components', () => {
             },
           ],
         }),
-      } as Response)
+      } as Response);
       
-      render(<ImageGenerator />)
+      render(<ImageGenerator />);
       
       // Select DALL-E 3
-      const dalle3Tab = screen.getByRole('tab', { name: /DALL-E 3/i })
-      await user.click(dalle3Tab)
+      const dalle3Tab = screen.getByRole('tab', { name: /DALL-E 3/i });
+      await user.click(dalle3Tab);
       
       // Generate images
-      const generateButton = screen.getByRole('button', { name: /generate all images/i })
-      await user.click(generateButton)
+      const generateButton = screen.getByRole('button', { name: /generate all images/i });
+      await user.click(generateButton);
       
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
@@ -332,31 +332,31 @@ describe('Stage Components', () => {
           expect.objectContaining({
             method: 'POST',
             body: expect.stringContaining('dalle3'),
-          })
-        )
-      })
-    })
+          }),
+        );
+      });
+    });
 
     it('should handle image upload', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup();
       
-      render(<ImageGenerator />)
+      render(<ImageGenerator />);
       
       // Switch to upload tab
-      const uploadTab = screen.getByRole('tab', { name: /upload images/i })
-      await user.click(uploadTab)
+      const uploadTab = screen.getByRole('tab', { name: /upload images/i });
+      await user.click(uploadTab);
       
       // Create test image file
-      const file = new File([''], 'test.jpg', { type: 'image/jpeg' })
+      const file = new File([''], 'test.jpg', { type: 'image/jpeg' });
       
-      const input = screen.getByLabelText(/upload image/i)
-      await user.upload(input, file)
+      const input = screen.getByLabelText(/upload image/i);
+      await user.upload(input, file);
       
       // Verify file is processed
       await waitFor(() => {
-        expect(screen.getByText(/test.jpg/i)).toBeInTheDocument()
-      })
-    })
+        expect(screen.getByText(/test.jpg/i)).toBeInTheDocument();
+      });
+    });
 
     it('should preview generated images', async () => {
       productionState.updateStage('images', {
@@ -370,15 +370,15 @@ describe('Stage Components', () => {
             status: 'completed',
           },
         ],
-      })
+      });
       
-      render(<ImageGenerator />)
+      render(<ImageGenerator />);
       
       // Check if image is displayed
-      const image = screen.getByAltText(/Scene 1/i)
-      expect(image).toHaveAttribute('src', '/images/1.jpg')
-    })
-  })
+      const image = screen.getByAltText(/Scene 1/i);
+      expect(image).toHaveAttribute('src', '/images/1.jpg');
+    });
+  });
 
   describe('VideoGenerator', () => {
     beforeEach(() => {
@@ -393,7 +393,7 @@ describe('Stage Components', () => {
             status: 'completed',
           },
         ],
-      })
+      });
       
       productionState.updateStage('audio', {
         status: 'completed',
@@ -405,19 +405,19 @@ describe('Stage Components', () => {
             status: 'completed',
           },
         ],
-      })
-    })
+      });
+    });
 
     it('should display video generation providers', () => {
-      render(<VideoGenerator />)
+      render(<VideoGenerator />);
       
-      expect(screen.getByText(/Runway Gen-2/i)).toBeInTheDocument()
-      expect(screen.getByText(/Stable Video Diffusion/i)).toBeInTheDocument()
-      expect(screen.getByText(/ModelScope/i)).toBeInTheDocument()
-    })
+      expect(screen.getByText(/Runway Gen-2/i)).toBeInTheDocument();
+      expect(screen.getByText(/Stable Video Diffusion/i)).toBeInTheDocument();
+      expect(screen.getByText(/ModelScope/i)).toBeInTheDocument();
+    });
 
     it('should handle video generation with audio sync', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup();
       
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -431,22 +431,22 @@ describe('Stage Components', () => {
             },
           ],
         }),
-      } as Response)
+      } as Response);
       
-      render(<VideoGenerator />)
+      render(<VideoGenerator />);
       
-      const generateButton = screen.getByRole('button', { name: /generate all videos/i })
-      await user.click(generateButton)
+      const generateButton = screen.getByRole('button', { name: /generate all videos/i });
+      await user.click(generateButton);
       
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
           expect.stringContaining('/api/videos/batch'),
           expect.objectContaining({
             method: 'POST',
-          })
-        )
-      })
-    })
+          }),
+        );
+      });
+    });
 
     it('should show audio sync timeline', () => {
       productionState.updateStage('video', {
@@ -460,14 +460,14 @@ describe('Stage Components', () => {
             duration: 5,
           },
         ],
-      })
+      });
       
-      render(<VideoGenerator />)
+      render(<VideoGenerator />);
       
-      expect(screen.getByText(/Audio Sync Timeline/i)).toBeInTheDocument()
-      expect(screen.getByText(/5s/i)).toBeInTheDocument()
-    })
-  })
+      expect(screen.getByText(/Audio Sync Timeline/i)).toBeInTheDocument();
+      expect(screen.getByText(/5s/i)).toBeInTheDocument();
+    });
+  });
 
   describe('FinalAssembly', () => {
     beforeEach(() => {
@@ -489,30 +489,30 @@ describe('Stage Components', () => {
             duration: 4,
           },
         ],
-      })
-    })
+      });
+    });
 
     it('should display timeline editor', () => {
-      render(<FinalAssembly />)
+      render(<FinalAssembly />);
       
-      expect(screen.getByText(/Timeline Editor/i)).toBeInTheDocument()
-      expect(screen.getByText(/Total Duration: 9s/i)).toBeInTheDocument()
-    })
+      expect(screen.getByText(/Timeline Editor/i)).toBeInTheDocument();
+      expect(screen.getByText(/Total Duration: 9s/i)).toBeInTheDocument();
+    });
 
     it('should allow export format selection', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup();
       
-      render(<FinalAssembly />)
+      render(<FinalAssembly />);
       
       // Find format selector
-      const formatSelect = screen.getByLabelText(/export format/i)
-      await user.selectOptions(formatSelect, 'webm')
+      const formatSelect = screen.getByLabelText(/export format/i);
+      await user.selectOptions(formatSelect, 'webm');
       
-      expect(formatSelect).toHaveValue('webm')
-    })
+      expect(formatSelect).toHaveValue('webm');
+    });
 
     it('should handle final export', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup();
       
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -521,62 +521,62 @@ describe('Stage Components', () => {
           videoUrl: '/final/output.mp4',
           downloadUrl: '/download/output.mp4',
         }),
-      } as Response)
+      } as Response);
       
-      render(<FinalAssembly />)
+      render(<FinalAssembly />);
       
-      const exportButton = screen.getByRole('button', { name: /export final video/i })
-      await user.click(exportButton)
+      const exportButton = screen.getByRole('button', { name: /export final video/i });
+      await user.click(exportButton);
       
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
           expect.stringContaining('/api/assembly/export'),
           expect.objectContaining({
             method: 'POST',
-          })
-        )
-      })
+          }),
+        );
+      });
       
       // Check for download link
       await waitFor(() => {
         expect(screen.getByRole('link', { name: /download/i })).toHaveAttribute(
           'href',
-          '/download/output.mp4'
-        )
-      })
-    })
+          '/download/output.mp4',
+        );
+      });
+    });
 
     it('should show export progress', async () => {
-      render(<FinalAssembly />)
+      render(<FinalAssembly />);
       
       productionState.updateStage('assembly', {
         status: 'exporting',
         progress: 60,
-      })
+      });
       
       await waitFor(() => {
-        expect(screen.getByText(/60%/)).toBeInTheDocument()
-        expect(screen.getByText(/Exporting video/i)).toBeInTheDocument()
-      })
-    })
-  })
+        expect(screen.getByText(/60%/)).toBeInTheDocument();
+        expect(screen.getByText(/Exporting video/i)).toBeInTheDocument();
+      });
+    });
+  });
 
   describe('Stage Navigation', () => {
     it('should prevent navigation to locked stages', () => {
-      productionState.updateStage('script', { status: 'idle' })
+      productionState.updateStage('script', { status: 'idle' });
       
-      render(<AudioGenerator />)
+      render(<AudioGenerator />);
       
-      expect(screen.getByText(/Complete script processing first/i)).toBeInTheDocument()
-    })
+      expect(screen.getByText(/Complete script processing first/i)).toBeInTheDocument();
+    });
 
     it('should show completion status for each stage', () => {
-      productionState.updateStage('script', { status: 'completed' })
-      productionState.updateStage('voice', { status: 'completed' })
-      productionState.updateStage('audio', { status: 'generating', progress: 50 })
+      productionState.updateStage('script', { status: 'completed' });
+      productionState.updateStage('voice', { status: 'completed' });
+      productionState.updateStage('audio', { status: 'generating', progress: 50 });
       
       // Would need to render a navigation component here
       // This is a placeholder for the navigation test
-    })
-  })
-})
+    });
+  });
+});

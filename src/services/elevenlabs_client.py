@@ -8,8 +8,45 @@ import logging
 from typing import Dict, List, Any, Optional, BinaryIO
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+def validate_audio_file(file_path: str) -> str:
+    """
+    Validate audio file for security.
+    
+    Args:
+        file_path: Path to audio file
+    
+    Returns:
+        Validated file path
+    
+    Raises:
+        ValueError: If file is invalid or potentially malicious
+    """
+    if not file_path:
+        raise ValueError("File path cannot be empty")
+    
+    path = Path(file_path).resolve()
+    
+    if not path.exists():
+        raise ValueError(f"Audio file does not exist: {path}")
+    
+    if not path.is_file():
+        raise ValueError(f"Path is not a file: {path}")
+    
+    # Check file extension for audio files
+    allowed_extensions = {'.mp3', '.wav', '.m4a', '.flac', '.ogg', '.aac'}
+    if path.suffix.lower() not in allowed_extensions:
+        raise ValueError(f"Unsupported audio file type: {path.suffix}")
+    
+    # Check file size (limit to 25MB for safety)
+    max_size = 25 * 1024 * 1024  # 25MB
+    if path.stat().st_size > max_size:
+        raise ValueError(f"Audio file too large: {path.stat().st_size} bytes (max: {max_size})")
+    
+    return str(path)
 
 class ElevenLabsClient:
     """Client for interacting with ElevenLabs Text-to-Speech API."""
@@ -56,6 +93,15 @@ class ElevenLabsClient:
         Returns:
             Audio data as bytes
         """
+        # Input validation
+        if not text or not text.strip():
+            raise ValueError("Text cannot be empty")
+        
+        if len(text) > 5000:  # ElevenLabs limit
+            raise ValueError(f"Text too long: {len(text)} characters (max: 5000)")
+        
+        if not voice_id or not voice_id.strip():
+            raise ValueError("Voice ID cannot be empty")
         url = f"{self.BASE_URL}/text-to-speech/{voice_id}"
         
         # Default voice settings
@@ -107,6 +153,18 @@ class ElevenLabsClient:
         Yields:
             Audio data chunks
         """
+        # Input validation
+        if not text or not text.strip():
+            raise ValueError("Text cannot be empty")
+        
+        if len(text) > 5000:
+            raise ValueError(f"Text too long: {len(text)} characters (max: 5000)")
+        
+        if not voice_id or not voice_id.strip():
+            raise ValueError("Voice ID cannot be empty")
+        
+        if chunk_size <= 0 or chunk_size > 10240:  # Reasonable limits
+            raise ValueError("Chunk size must be between 1 and 10240 bytes")
         url = f"{self.BASE_URL}/text-to-speech/{voice_id}/stream"
         
         if voice_settings is None:
@@ -192,39 +250,54 @@ class ElevenLabsClient:
         """
         url = f"{self.BASE_URL}/voices/add"
         
-        # Prepare multipart form data
-        files_data = []
+        # Validate all audio files first
+        validated_files = []
         for file_path in files:
-            if not os.path.exists(file_path):
-                raise FileNotFoundError(f"Audio file not found: {file_path}")
-            
-            with open(file_path, 'rb') as f:
-                files_data.append(('files', (os.path.basename(file_path), f, 'audio/mpeg')))
+            validated_path = validate_audio_file(file_path)
+            validated_files.append(validated_path)
         
-        data = {
-            'name': name,
-            'description': description
-        }
-        
-        if labels:
-            data['labels'] = labels
-        
-        # Remove Content-Type header for multipart upload
-        headers = {'xi-api-key': self.api_key}
+        # Prepare multipart form data with proper resource management
+        files_data = []
+        file_handles = []
         
         try:
-            response = requests.post(url, headers=headers, data=data, files=files_data)
-            response.raise_for_status()
+            for file_path in validated_files:
+                file_handle = open(file_path, 'rb')
+                file_handles.append(file_handle)
+                files_data.append(('files', (os.path.basename(file_path), file_handle, 'audio/mpeg')))
+        
+            data = {
+                'name': name,
+                'description': description
+            }
             
-            voice_data = response.json()
-            logger.info(f"Successfully cloned voice: {name} (ID: {voice_data.get('voice_id')})")
-            return voice_data
+            if labels:
+                data['labels'] = labels
             
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error cloning voice: {str(e)}")
-            if hasattr(e, 'response') and e.response is not None:
-                logger.error(f"Response content: {e.response.text}")
-            raise
+            # Remove Content-Type header for multipart upload
+            headers = {'xi-api-key': self.api_key}
+            
+            try:
+                response = requests.post(url, headers=headers, data=data, files=files_data)
+                response.raise_for_status()
+                
+                voice_data = response.json()
+                logger.info(f"Successfully cloned voice: {name} (ID: {voice_data.get('voice_id')})")
+                return voice_data
+                
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Error cloning voice: {str(e)}")
+                if hasattr(e, 'response') and e.response is not None:
+                    logger.error(f"Response content: {e.response.text}")
+                raise
+        
+        finally:
+            # Ensure all file handles are properly closed
+            for file_handle in file_handles:
+                try:
+                    file_handle.close()
+                except Exception as e:
+                    logger.warning(f"Error closing file handle: {e}")
     
     def delete_voice(self, voice_id: str) -> bool:
         """

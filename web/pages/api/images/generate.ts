@@ -16,7 +16,7 @@ interface GenerateImageResponse {
 // Mock implementation for development
 // In production, this would integrate with OpenAI's DALL-E 3 API
 // Note: Flux.1 support was removed due to high subscription costs
-async function generateWithDALLE3(prompt: string, size: string = '1792x1024'): Promise<string> {
+async function generateWithDALLE3(prompt: string): Promise<string> {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 2000));
   
@@ -37,17 +37,16 @@ async function generateWithDALLE3(prompt: string, size: string = '1792x1024'): P
   return `https://via.placeholder.com/1792x1024/1a1a1a/00ff00?text=${encodedPrompt}`;
 }
 
-
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<GenerateImageResponse | { error: string }>
+  res: NextApiResponse<GenerateImageResponse | { error: string }>,
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { prompt, provider, sceneId, size } = req.body as GenerateImageRequest;
+    const { prompt, provider, sceneId } = req.body as GenerateImageRequest;
 
     if (!prompt || !provider || !sceneId) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -68,7 +67,7 @@ export default async function handler(
     
     try {
       // Only DALL-E 3 is supported (Flux.1 removed due to high subscription costs)
-      imageUrl = await generateWithDALLE3(sanitizedPrompt, size);
+      imageUrl = await generateWithDALLE3(sanitizedPrompt);
     } catch (error) {
       console.error('Image generation error:', error);
       
@@ -76,12 +75,12 @@ export default async function handler(
       if (error instanceof Error) {
         if (error.message.includes('content policy')) {
           return res.status(400).json({ 
-            error: 'The prompt was rejected due to content policy. Please modify your prompt and try again.' 
+            error: 'The prompt was rejected due to content policy. Please modify your prompt and try again.', 
           });
         }
         if (error.message.includes('rate limit')) {
           return res.status(429).json({ 
-            error: 'Rate limit exceeded. Please try again later.' 
+            error: 'Rate limit exceeded. Please try again later.', 
           });
         }
       }
@@ -96,12 +95,12 @@ export default async function handler(
     res.status(200).json({
       url: imageUrl,
       provider,
-      sceneId
+      sceneId,
     });
   } catch (error) {
     console.error('API error:', error);
     res.status(500).json({ 
-      error: 'Failed to generate image. Please try again.' 
+      error: 'Failed to generate image. Please try again.', 
     });
   }
 }

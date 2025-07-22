@@ -8,10 +8,9 @@ import {
   ArrowDownTrayIcon,
   EyeIcon,
   ShareIcon,
-  HeartIcon,
 } from '@heroicons/react/24/outline';
 import { GenerationJob } from '@/types';
-import { downloadBlob, formatFileSize, cn } from '@/lib/utils';
+import { downloadBlob, cn } from '@/lib/utils';
 import { apiClient } from '@/lib/api';
 
 interface MediaPreviewProps {
@@ -28,7 +27,6 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [isDownloading, setIsDownloading] = useState<'image' | 'video' | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -36,23 +34,21 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({
   useEffect(() => {
     const video = videoRef.current;
     if (video) {
-      const handleLoadedData = () => setIsVideoLoaded(true);
       const handlePlay = () => setIsPlaying(true);
       const handlePause = () => setIsPlaying(false);
       const handleEnded = () => setIsPlaying(false);
 
-      video.addEventListener('loadeddata', handleLoadedData);
       video.addEventListener('play', handlePlay);
       video.addEventListener('pause', handlePause);
       video.addEventListener('ended', handleEnded);
 
       return () => {
-        video.removeEventListener('loadeddata', handleLoadedData);
         video.removeEventListener('play', handlePlay);
         video.removeEventListener('pause', handlePause);
         video.removeEventListener('ended', handleEnded);
       };
     }
+    return () => {}; // Empty cleanup function when video is not available
   }, [job.videoUrl]);
 
   const handlePlayPause = () => {
@@ -154,7 +150,7 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({
                 fill
                 className={cn(
                   'object-cover transition-opacity duration-300',
-                  isImageLoaded ? 'opacity-100' : 'opacity-0'
+                  isImageLoaded ? 'opacity-100' : 'opacity-0',
                 )}
                 onLoad={() => setIsImageLoaded(true)}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -203,7 +199,7 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({
                   className={cn(
                     'flex items-center justify-center w-16 h-16 bg-black bg-opacity-50 rounded-full text-white transition-all duration-300',
                     'opacity-0 group-hover:opacity-100',
-                    isPlaying && 'opacity-0'
+                    isPlaying && 'opacity-0',
                   )}
                 >
                   {isPlaying ? (

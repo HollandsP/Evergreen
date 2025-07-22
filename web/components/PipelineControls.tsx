@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
 import {
   Cog6ToothIcon,
-  PlayIcon,
-  PauseIcon,
   StopIcon,
   TrashIcon,
   ArrowPathIcon,
-  ChartBarIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { GenerationJob, SystemStatus, PipelineSettings } from '@/types';
-import { formatCost, formatDuration, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface PipelineControlsProps {
   currentJob?: GenerationJob;
@@ -157,13 +154,13 @@ const PipelineControls: React.FC<PipelineControlsProps> = ({
                 onClick={() => onSettingsChange({ autoDownload: !settings.autoDownload })}
                 className={cn(
                   'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-                  settings.autoDownload ? 'bg-primary-600' : 'bg-gray-200'
+                  settings.autoDownload ? 'bg-primary-600' : 'bg-gray-200',
                 )}
               >
                 <span
                   className={cn(
                     'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                    settings.autoDownload ? 'translate-x-5' : 'translate-x-0'
+                    settings.autoDownload ? 'translate-x-5' : 'translate-x-0',
                   )}
                 />
               </button>
@@ -175,13 +172,13 @@ const PipelineControls: React.FC<PipelineControlsProps> = ({
                 onClick={() => onSettingsChange({ notifications: !settings.notifications })}
                 className={cn(
                   'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-                  settings.notifications ? 'bg-primary-600' : 'bg-gray-200'
+                  settings.notifications ? 'bg-primary-600' : 'bg-gray-200',
                 )}
               >
                 <span
                   className={cn(
                     'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                    settings.notifications ? 'translate-x-5' : 'translate-x-0'
+                    settings.notifications ? 'translate-x-5' : 'translate-x-0',
                   )}
                 />
               </button>
@@ -247,7 +244,7 @@ const PipelineControls: React.FC<PipelineControlsProps> = ({
                   type="number"
                   value={settings.seed || ''}
                   onChange={(e) => onSettingsChange({ 
-                    seed: e.target.value ? parseInt(e.target.value) : undefined 
+                    seed: e.target.value ? parseInt(e.target.value) : undefined, 
                   })}
                   placeholder="Auto"
                   className="input text-sm"
@@ -297,7 +294,7 @@ const PipelineControls: React.FC<PipelineControlsProps> = ({
                   <span className={cn(
                     'font-medium',
                     systemStatus.systemLoad > 0.8 ? 'text-red-600' : 
-                    systemStatus.systemLoad > 0.6 ? 'text-yellow-600' : 'text-green-600'
+                      systemStatus.systemLoad > 0.6 ? 'text-yellow-600' : 'text-green-600',
                   )}>
                     {Math.round(systemStatus.systemLoad * 100)}%
                   </span>
@@ -315,7 +312,7 @@ const PipelineControls: React.FC<PipelineControlsProps> = ({
                   className={cn(
                     'progress-fill transition-all duration-300',
                     systemStatus.systemLoad > 0.8 ? 'bg-red-500' :
-                    systemStatus.systemLoad > 0.6 ? 'bg-yellow-500' : 'bg-green-500'
+                      systemStatus.systemLoad > 0.6 ? 'bg-yellow-500' : 'bg-green-500',
                   )}
                   style={{ width: `${systemStatus.systemLoad * 100}%` }}
                 />

@@ -3,20 +3,10 @@
  * Flux.1 support removed due to high subscription costs
  */
 
-interface SceneStyle {
-  baseStyle: string;
-  sceneSpecific: Record<string, string>;
-}
-
-interface PromptEnhancement {
-  style: string;
-  lighting: string;
-  composition: string;
-  mood?: string;
-}
+// Removed unused interfaces
 
 // Base style for all images
-const BASE_STYLE = "cinematic, high contrast, moody lighting, 16:9 aspect ratio, photorealistic";
+const BASE_STYLE = 'cinematic, high contrast, moody lighting, 16:9 aspect ratio, photorealistic';
 
 // Scene-specific styles based on the Python prompt library
 const SCENE_STYLES: Record<string, string> = {
@@ -29,7 +19,7 @@ const SCENE_STYLES: Record<string, string> = {
   'corporate': 'professional lighting, minimalist design, glass and steel, high-end photography',
   'residential': 'natural lighting, lived-in atmosphere, warm tones, suburban setting',
   'industrial': 'gritty, harsh lighting, machinery, warning signs, documentary style',
-  'dystopian': 'polluted sky, neon signs, abandoned vehicles, atmospheric fog'
+  'dystopian': 'polluted sky, neon signs, abandoned vehicles, atmospheric fog',
 };
 
 // Lighting modifiers from the Python library
@@ -40,7 +30,7 @@ const LIGHTING_MODIFIERS = [
   'harsh industrial fluorescent lighting',
   'moody tungsten color temperature',
   'neon lights in urban darkness',
-  'high dynamic range color grading'
+  'high dynamic range color grading',
 ];
 
 // Composition techniques
@@ -51,7 +41,7 @@ const COMPOSITION_MODIFIERS = [
   'asymmetrical dynamic balance',
   'foreground, midground, background layers',
   'wide establishing shot',
-  'cinematic perspective'
+  'cinematic perspective',
 ];
 
 // Camera movements (for video prompt hints)
@@ -61,29 +51,28 @@ const CAMERA_MOVEMENTS = {
   tilt: 'gradual vertical tilt showing scale',
   track: 'smooth tracking shot following action',
   zoom: 'subtle zoom focusing attention',
-  drift: 'gentle floating camera movement'
+  drift: 'gentle floating camera movement',
 };
 
-// Color grading options
-const COLOR_GRADING = [
-  'desaturated color palette with teal and orange accents',
-  'high contrast with crushed blacks',
-  'cool color temperature suggesting technology',
-  'warm practical lights in cold environments',
-  'monochromatic blue-green color scheme'
-];
+// Color grading options (unused)
+// const COLOR_GRADING = [
+//   'desaturated color palette with teal and orange accents',
+//   'high contrast with crushed blacks',
+//   'cool color temperature suggesting technology',
+//   'warm practical lights in cold environments',
+//   'monochromatic blue-green color scheme'
+// ];
 
 export function optimizePrompt(
   basePrompt: string,
   sceneType: string,
   audioDuration?: number,
-  provider: 'dalle3' = 'dalle3'
 ): string {
   let optimizedPrompt = basePrompt;
   
   // Find matching scene style
   const sceneKey = Object.keys(SCENE_STYLES).find(key => 
-    sceneType.toLowerCase().includes(key)
+    sceneType.toLowerCase().includes(key),
   );
   
   const sceneStyle = sceneKey ? SCENE_STYLES[sceneKey] : '';
@@ -128,7 +117,7 @@ export function enhanceWithGenre(prompt: string, genre: string): string {
     'corporate_interior': 'modern office space, ergonomic furniture, floor-to-ceiling windows, minimalist design',
     'residential_area': 'suburban houses, tree-lined streets, well-maintained lawns, peaceful atmosphere',
     'natural_environment': 'pristine wilderness, untouched nature, dramatic natural lighting',
-    'industrial_complex': 'massive machinery, cooling towers, warning signs, harsh industrial setting'
+    'industrial_complex': 'massive machinery, cooling towers, warning signs, harsh industrial setting',
   };
   
   const enhancement = genreEnhancements[genre];
@@ -140,7 +129,7 @@ export function addTransitionEffects(prompt: string, transitionType: string): st
     'time_passage': 'showing passage of time, lighting changes, temporal progression',
     'location_change': 'establishing shot, spatial orientation, new environment reveal',
     'scale_change': 'dramatic scale shift, perspective change, zoom transition',
-    'emotional_shift': 'mood transformation, color temperature change, atmosphere evolution'
+    'emotional_shift': 'mood transformation, color temperature change, atmosphere evolution',
   };
   
   const effect = transitions[transitionType];
@@ -152,7 +141,7 @@ export function sanitizePrompt(prompt: string): string {
   const avoidTerms = [
     'blood', 'gore', 'weapon', 'gun', 'knife', 'violence', 'death',
     'nude', 'naked', 'sexual', 'erotic',
-    'drug', 'illegal'
+    'drug', 'illegal',
   ];
   
   let sanitized = prompt.toLowerCase();
@@ -176,12 +165,11 @@ function getSafeAlternative(term: string): string {
     'danger': 'warning',
     'weapon': 'tool',
     'death': 'ending',
-    'violence': 'action'
+    'violence': 'action',
   };
   
   return alternatives[term] || 'scene';
 }
-
 
 // Export camera movement suggestions for video generation hints
 export function getCameraMovementHint(sceneType: string, duration: number): string {
@@ -207,13 +195,13 @@ export function generateOptimizedPrompt(
     audioDuration?: number;
     provider?: 'dalle3'; // Only DALL-E 3 supported (Flux.1 removed due to cost)
     transitionType?: string;
-  } = {}
+  } = {},
 ): string {
   let prompt = basePrompt;
   
   // Apply optimizations in order
   if (options.sceneType) {
-    prompt = optimizePrompt(prompt, options.sceneType, options.audioDuration, options.provider);
+    prompt = optimizePrompt(prompt, options.sceneType, options.audioDuration);
   }
   
   if (options.genre) {

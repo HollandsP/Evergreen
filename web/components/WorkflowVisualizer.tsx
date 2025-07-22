@@ -5,7 +5,7 @@ import {
   CheckCircleIcon, 
   XCircleIcon,
   ClockIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { PipelineStep } from '@/types';
 import { cn, formatDuration } from '@/lib/utils';
@@ -116,7 +116,7 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
                   <div
                     className={cn(
                       'absolute left-6 top-12 w-0.5 h-8 transition-colors duration-300',
-                      isCompleted ? 'bg-green-300' : 'bg-gray-200'
+                      isCompleted ? 'bg-green-300' : 'bg-gray-200',
                     )}
                   />
                 )}
@@ -127,7 +127,7 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
                     isActive && 'bg-blue-50 border border-blue-200',
                     isFailed && 'bg-red-50 border border-red-200',
                     isCompleted && 'bg-green-50 border border-green-200',
-                    !isActive && !isFailed && !isCompleted && 'hover:bg-gray-50'
+                    !isActive && !isFailed && !isCompleted && 'hover:bg-gray-50',
                   )}
                 >
                   {/* Step Icon */}
@@ -137,7 +137,7 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
                       isCompleted && 'bg-green-100 border-green-300',
                       isRunning && 'bg-blue-100 border-blue-300 shadow-lg',
                       isFailed && 'bg-red-100 border-red-300',
-                      step.status === 'pending' && 'bg-gray-100 border-gray-300'
+                      step.status === 'pending' && 'bg-gray-100 border-gray-300',
                     )}
                   >
                     {getStepIcon(step)}
@@ -165,7 +165,7 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
                             className={cn(
                               'progress-fill transition-all duration-500 ease-out',
                               isCompleted && 'bg-green-500',
-                              isRunning && 'bg-blue-500'
+                              isRunning && 'bg-blue-500',
                             )}
                             style={{ width: `${step.progress}%` }}
                           />
@@ -220,7 +220,7 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = ({
             <div
               className="progress-fill bg-primary-500"
               style={{
-                width: `${(steps.filter(s => s.status === 'completed').length / steps.length) * 100}%`
+                width: `${(steps.filter(s => s.status === 'completed').length / steps.length) * 100}%`,
               }}
             />
           </div>

@@ -45,7 +45,7 @@ async function generateMockImage(scene: ScriptScene): Promise<ImageData> {
 // Generate image with DALL-E 3
 async function generateDalle3Image(
   scene: ScriptScene,
-  settings?: BatchImageRequest['settings']
+  settings?: BatchImageRequest['settings'],
 ): Promise<ImageData> {
   const apiKey = process.env.OPENAI_API_KEY;
   
@@ -125,7 +125,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version',
   );
 
   if (req.method === 'OPTIONS') {
@@ -152,8 +152,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     updateProductionStage('images', {
       status: 'generating',
       progress: 0,
-      totalScenes: scenes.length,
-      generatedScenes: 0,
+      generatedImages: [],
       error: undefined,
     });
 
@@ -201,8 +200,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const progress = Math.round((imageResults.length / scenes.length) * 100);
       updateProductionStage('images', {
         progress,
-        generatedScenes: imageResults.length,
-        imageData: imageResults,
+        generatedImages: imageResults,
       });
       
       // Send progress update
@@ -238,9 +236,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     updateProductionStage('images', {
       status: 'completed',
       progress: 100,
-      imageData: imageResults,
-      successCount,
-      errorCount,
+      generatedImages: imageResults,
     });
 
     // Send completion notification

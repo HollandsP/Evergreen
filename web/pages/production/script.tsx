@@ -7,7 +7,7 @@ import { InformationCircleIcon } from '@heroicons/react/24/outline';
 export default function ScriptProcessingPage() {
   const router = useRouter();
 
-  const handleScriptComplete = useCallback((scriptData: any) => {
+  const handleScriptComplete = useCallback(() => {
     // Script data is already saved to localStorage by ScriptProcessor
     // Navigate to the audio generation stage
     setTimeout(() => {

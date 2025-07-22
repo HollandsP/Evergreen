@@ -12,11 +12,11 @@ interface ImageGeneratorPanelProps {
 }
 
 const DEFAULT_PROMPTS = [
-  "A majestic mountain landscape at golden hour with misty valleys",
-  "A futuristic city skyline with flying cars and neon lights",
-  "An underwater scene with colorful coral reefs and tropical fish",
-  "A cozy library with floating books and magical glowing orbs",
-  "A steampunk workshop with intricate gears and brass machinery"
+  'A majestic mountain landscape at golden hour with misty valleys',
+  'A futuristic city skyline with flying cars and neon lights',
+  'An underwater scene with colorful coral reefs and tropical fish',
+  'A cozy library with floating books and magical glowing orbs',
+  'A steampunk workshop with intricate gears and brass machinery',
 ];
 
 const ImageGeneratorPanel: React.FC<ImageGeneratorPanelProps> = ({
@@ -107,7 +107,7 @@ const ImageGeneratorPanel: React.FC<ImageGeneratorPanelProps> = ({
                   'p-4 text-left border rounded-lg transition-all duration-200',
                   selectedProvider === provider.name
                     ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50',
                 )}
               >
                 <div className="flex items-center justify-between mb-2">
@@ -137,7 +137,7 @@ const ImageGeneratorPanel: React.FC<ImageGeneratorPanelProps> = ({
             placeholder="Describe the video you want to create..."
             className={cn(
               'textarea h-32',
-              promptError ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
+              promptError ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : '',
             )}
             disabled={isGenerating}
           />
@@ -233,7 +233,7 @@ const ImageGeneratorPanel: React.FC<ImageGeneratorPanelProps> = ({
                   type="number"
                   value={settings.seed || ''}
                   onChange={(e) => onSettingsChange({ 
-                    seed: e.target.value ? parseInt(e.target.value) : undefined 
+                    seed: e.target.value ? parseInt(e.target.value) : undefined, 
                   })}
                   placeholder="Random"
                   className="input text-sm"
@@ -272,7 +272,7 @@ const ImageGeneratorPanel: React.FC<ImageGeneratorPanelProps> = ({
           disabled={isGenerating || !prompt.trim() || availableProviders.length === 0}
           className={cn(
             'w-full btn-primary py-3 text-base font-medium',
-            isGenerating ? 'opacity-50 cursor-not-allowed' : ''
+            isGenerating ? 'opacity-50 cursor-not-allowed' : '',
           )}
         >
           {isGenerating ? (

@@ -3,7 +3,7 @@ import { GenerationJob } from '@/types';
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<GenerationJob[] | { error: string }>
+  res: NextApiResponse<GenerationJob[] | { error: string }>,
 ) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', ['GET']);
