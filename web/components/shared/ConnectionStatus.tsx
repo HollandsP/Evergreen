@@ -63,34 +63,34 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ className })
         return {
           icon: CheckCircleIcon,
           text: 'Connected',
-          color: 'text-green-600',
-          bgColor: 'bg-green-50',
-          borderColor: 'border-green-200',
+          color: 'text-green-400',
+          bgColor: 'bg-green-900/20',
+          borderColor: 'border-green-600/50',
         };
       case 'connecting':
         return {
           icon: WifiIcon,
           text: reconnectAttempts > 0 ? `Reconnecting... (${reconnectAttempts})` : 'Connecting...',
-          color: 'text-yellow-600',
-          bgColor: 'bg-yellow-50',
-          borderColor: 'border-yellow-200',
+          color: 'text-yellow-400',
+          bgColor: 'bg-yellow-900/20',
+          borderColor: 'border-yellow-600/50',
         };
       case 'error':
         return {
           icon: ExclamationTriangleIcon,
           text: 'Connection Error',
-          color: 'text-red-600',
-          bgColor: 'bg-red-50',
-          borderColor: 'border-red-200',
+          color: 'text-red-400',
+          bgColor: 'bg-red-900/20',
+          borderColor: 'border-red-600/50',
         };
       case 'disconnected':
       default:
         return {
           icon: WifiIcon,
           text: 'Disconnected',
-          color: 'text-gray-600',
-          bgColor: 'bg-gray-50',
-          borderColor: 'border-gray-200',
+          color: 'text-zinc-400',
+          bgColor: 'bg-zinc-800',
+          borderColor: 'border-zinc-700',
         };
     }
   };

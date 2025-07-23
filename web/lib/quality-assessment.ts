@@ -235,7 +235,6 @@ export class AdvancedQualityAssessment {
         assessmentVersion: '1.0.0',
         metadata: {
           ...metadata,
-          assessmentDuration: performance.now() - startTime,
           automaticFlags: this.generateAutomaticFlags(metrics)
         }
       };
@@ -301,7 +300,7 @@ export class AdvancedQualityAssessment {
    */
   private async assessImageTechnicalQuality(
     contentData: string | ArrayBuffer | Blob,
-    metadata: any
+    _metadata: any
   ): Promise<QualityMetrics['technical']> {
     try {
       // Load image for analysis
@@ -483,7 +482,7 @@ export class AdvancedQualityAssessment {
   /**
    * Identify quality issues based on metrics
    */
-  private identifyQualityIssues(metrics: QualityMetrics, metadata: any): QualityIssue[] {
+  private identifyQualityIssues(metrics: QualityMetrics, _metadata: any): QualityIssue[] {
     const issues: QualityIssue[] = [];
 
     // Technical issues
@@ -546,7 +545,7 @@ export class AdvancedQualityAssessment {
   private generateRecommendations(
     metrics: QualityMetrics,
     issues: QualityIssue[],
-    metadata: any
+    _metadata: any
   ): QualityRecommendation[] {
     const recommendations: QualityRecommendation[] = [];
 
@@ -768,7 +767,7 @@ export class AdvancedQualityAssessment {
     return Math.min(100, normalizedEdgeStrength * 2);
   }
 
-  private assessCompressionArtifacts(imageData: ImageData): number {
+  private assessCompressionArtifacts(_imageData: ImageData): number {
     // Simplified compression artifact detection
     // Higher score means fewer artifacts (better quality)
     return 85 + Math.random() * 15; // Placeholder implementation
@@ -814,28 +813,28 @@ export class AdvancedQualityAssessment {
     return Math.max(50, 100 - deviation);
   }
 
-  private assessComposition(imageElement: HTMLImageElement, metadata: any): number {
+  private assessComposition(_imageElement: HTMLImageElement, _metadata: any): number {
     // Rule of thirds and basic composition analysis
     // This is a simplified implementation
     return 75 + Math.random() * 20; // Placeholder
   }
 
-  private assessCreativity(imageElement: HTMLImageElement, metadata: any): number {
+  private assessCreativity(_imageElement: HTMLImageElement, _metadata: any): number {
     // Creativity assessment based on uniqueness metrics
     return 70 + Math.random() * 25; // Placeholder
   }
 
-  private assessVisualCoherence(imageElement: HTMLImageElement, metadata: any): number {
+  private assessVisualCoherence(_imageElement: HTMLImageElement, _metadata: any): number {
     // Visual coherence assessment
     return 80 + Math.random() * 15; // Placeholder
   }
 
-  private assessStyleConsistency(imageElement: HTMLImageElement, metadata: any): number {
+  private assessStyleConsistency(_imageElement: HTMLImageElement, _metadata: any): number {
     // Style consistency assessment
     return 75 + Math.random() * 20; // Placeholder
   }
 
-  private assessPromptRelevance(contentData: any, prompt: string | undefined, contentType: string): number {
+  private assessPromptRelevance(_contentData: any, prompt: string | undefined, _contentType: string): number {
     if (!prompt) return 50;
     
     // Simplified prompt relevance assessment
@@ -843,57 +842,57 @@ export class AdvancedQualityAssessment {
     return 80 + Math.random() * 15;
   }
 
-  private assessFactualAccuracy(contentData: any, contentType: string, metadata: any): number {
+  private assessFactualAccuracy(_contentData: any, _contentType: string, _metadata: any): number {
     // Factual accuracy assessment
     return 85 + Math.random() * 10;
   }
 
-  private assessCompleteness(contentData: any, contentType: string, metadata: any): number {
+  private assessCompleteness(_contentData: any, _contentType: string, _metadata: any): number {
     // Content completeness assessment
     return 80 + Math.random() * 15;
   }
 
-  private assessContentAppropriateness(contentData: any, contentType: string): number {
+  private assessContentAppropriateness(_contentData: any, _contentType: string): number {
     // Content appropriateness and safety assessment
     return 95 + Math.random() * 5;
   }
 
-  private assessUsability(contentData: any, contentType: string, metadata: any): number {
+  private assessUsability(_contentData: any, _contentType: string, _metadata: any): number {
     // Production usability assessment
     return 80 + Math.random() * 15;
   }
 
-  private assessAccessibility(contentData: any, contentType: string): number {
+  private assessAccessibility(_contentData: any, _contentType: string): number {
     // Accessibility compliance assessment
     return 85 + Math.random() * 10;
   }
 
-  private assessScalability(contentData: any, contentType: string, metadata: any): number {
+  private assessScalability(_contentData: any, _contentType: string, _metadata: any): number {
     // Scalability assessment
     return 75 + Math.random() * 20;
   }
 
-  private assessDurability(contentData: any, contentType: string, metadata: any): number {
+  private assessDurability(_contentData: any, _contentType: string, _metadata: any): number {
     // Long-term durability assessment
     return 80 + Math.random() * 15;
   }
 
-  private assessVideoTechnicalQuality(contentData: any, metadata: any): Promise<QualityMetrics['technical']> {
+  private assessVideoTechnicalQuality(_contentData: any, _metadata: any): Promise<QualityMetrics['technical']> {
     // Video-specific technical quality assessment
     return Promise.resolve(this.getDefaultTechnicalMetrics());
   }
 
-  private assessAudioTechnicalQuality(contentData: any, metadata: any): Promise<QualityMetrics['technical']> {
+  private assessAudioTechnicalQuality(_contentData: any, _metadata: any): Promise<QualityMetrics['technical']> {
     // Audio-specific technical quality assessment
     return Promise.resolve(this.getDefaultTechnicalMetrics());
   }
 
-  private assessTextTechnicalQuality(contentData: any, metadata: any): Promise<QualityMetrics['technical']> {
+  private assessTextTechnicalQuality(_contentData: any, _metadata: any): Promise<QualityMetrics['technical']> {
     // Text-specific technical quality assessment
     return Promise.resolve(this.getDefaultTechnicalMetrics());
   }
 
-  private assessVideoAestheticQuality(contentData: any, metadata: any): Promise<QualityMetrics['aesthetic']> {
+  private assessVideoAestheticQuality(_contentData: any, _metadata: any): Promise<QualityMetrics['aesthetic']> {
     // Video-specific aesthetic quality assessment
     return Promise.resolve({
       composition: 75,
@@ -913,7 +912,7 @@ export class AdvancedQualityAssessment {
     };
   }
 
-  private calculateConfidence(metrics: QualityMetrics, metadata: any): number {
+  private calculateConfidence(_metrics: QualityMetrics, metadata: any): number {
     // Calculate confidence based on available data and assessment consistency
     let confidence = 0.8; // Base confidence
     

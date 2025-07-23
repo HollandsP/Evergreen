@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-
-// Mock Runway ML Gen-4 Turbo API
-// In production, this would integrate with the actual Runway API
+import { getRunwayClient } from '../../../lib/runway-client';
+import wsManager from '../../../lib/websocket';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 interface VideoGenerationRequest {
   imageUrl: string;
@@ -11,6 +12,8 @@ interface VideoGenerationRequest {
   motionIntensity?: number;
   lipSync?: boolean;
   audioUrl?: string;
+  projectId?: string;
+  sceneId?: string;
 }
 
 interface VideoGenerationResponse {
@@ -18,6 +21,7 @@ interface VideoGenerationResponse {
   jobId: string;
   status: 'completed' | 'processing' | 'failed';
   duration: number;
+  error?: string;
 }
 
 // Camera movement parameters based on dalle3_runway_prompts.py
@@ -36,23 +40,103 @@ const cameraMovementPrompts: Record<string, string> = {
   handheld: 'handheld camera movement, subtle shake, documentary style',
 };
 
-// Generate mock video URL based on parameters
-const generateMockVideoUrl = (_params: VideoGenerationRequest): string => {
-  const timestamp = Date.now();
-  const videoId = `video_${timestamp}_${Math.random().toString(36).substr(2, 9)}`;
+// Create scene folder structure
+async function createSceneFolders(projectId: string, sceneId: string): Promise<void> {
+  const basePath = path.join(process.cwd(), 'public', 'exports', projectId);
+  const scenePath = path.join(basePath, sceneId);
   
-  // In production, this would be the actual Runway-generated video URL
-  // For now, we'll use a placeholder that indicates the parameters
-  const baseUrl = 'https://storage.googleapis.com/evergreen-videos';
-  return `${baseUrl}/${videoId}.mp4`;
-};
+  // Create folders for scene assets
+  const folders = ['images', 'audio', 'videos', 'metadata', 'exports'];
+  
+  for (const folder of folders) {
+    const folderPath = path.join(scenePath, folder);
+    await fs.mkdir(folderPath, { recursive: true });
+  }
+  
+  // Create scene metadata file if it doesn't exist
+  const metadataPath = path.join(scenePath, 'metadata', 'scene.json');
+  try {
+    await fs.access(metadataPath);
+    // File exists, don't overwrite
+  } catch {
+    // File doesn't exist, create it
+    const metadata = {
+      id: sceneId,
+      projectId: projectId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      status: 'initialized',
+      assets: {
+        images: [],
+        audio: [],
+        videos: []
+      },
+      generation: {
+        videoRequests: [],
+        completedVideos: []
+      }
+    };
+    
+    await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
+  }
+}
 
-// Simulate Runway API processing time
-const simulateProcessing = async (duration: number): Promise<void> => {
-  // Simulate longer processing for longer videos
-  const processingTime = Math.min(2000 + (duration * 100), 5000);
-  await new Promise(resolve => setTimeout(resolve, processingTime));
-};
+// Save video URL metadata
+async function saveVideoMetadata(
+  projectId: string, 
+  sceneId: string, 
+  videoUrl: string,
+  metadata: any
+): Promise<void> {
+  const scenePath = path.join(process.cwd(), 'public', 'exports', projectId, sceneId);
+  const videoMetadataPath = path.join(scenePath, 'videos', 'metadata.json');
+  const sceneMetadataPath = path.join(scenePath, 'metadata', 'scene.json');
+  
+  try {
+    // Save to videos metadata
+    let existingVideoData = [];
+    try {
+      const content = await fs.readFile(videoMetadataPath, 'utf-8');
+      existingVideoData = JSON.parse(content);
+    } catch {
+      // File doesn't exist yet
+    }
+    
+    // Add new video metadata
+    const videoMetadata = {
+      url: videoUrl,
+      timestamp: new Date().toISOString(),
+      ...metadata
+    };
+    existingVideoData.push(videoMetadata);
+    
+    await fs.writeFile(videoMetadataPath, JSON.stringify(existingVideoData, null, 2));
+    
+    // Update scene metadata
+    try {
+      const sceneContent = await fs.readFile(sceneMetadataPath, 'utf-8');
+      const sceneData = JSON.parse(sceneContent);
+      
+      sceneData.assets.videos.push({
+        url: videoUrl,
+        jobId: metadata.jobId,
+        prompt: metadata.prompt,
+        duration: metadata.duration,
+        timestamp: new Date().toISOString()
+      });
+      
+      sceneData.updatedAt = new Date().toISOString();
+      sceneData.status = 'has_content';
+      
+      await fs.writeFile(sceneMetadataPath, JSON.stringify(sceneData, null, 2));
+    } catch (error) {
+      console.error('Failed to update scene metadata:', error);
+    }
+    
+  } catch (error) {
+    console.error('Failed to save video metadata:', error);
+  }
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -71,6 +155,8 @@ export default async function handler(
       motionIntensity = 50,
       lipSync = false,
       audioUrl,
+      projectId,
+      sceneId,
     } = req.body as VideoGenerationRequest;
 
     // Validate required parameters
@@ -80,12 +166,8 @@ export default async function handler(
       });
     }
 
-    // Validate duration (Runway Gen-4 supports up to 10 seconds)
-    if (duration < 1 || duration > 10) {
-      return res.status(400).json({ 
-        error: 'Duration must be between 1 and 10 seconds', 
-      });
-    }
+    // Validate duration (Runway Gen-4 supports 5 or 10 seconds)
+    const validDuration = duration <= 5 ? 5 : 10;
 
     // Build the complete prompt
     let fullPrompt = prompt;
@@ -106,57 +188,120 @@ export default async function handler(
       fullPrompt += ', accurate lip sync to audio, natural facial expressions matching speech';
     }
 
-    console.log('Generating video with parameters:', {
+    console.log('Generating video with RunwayML:', {
       imageUrl,
       fullPrompt,
-      duration,
+      duration: validDuration,
       motionIntensity,
       lipSync,
     });
 
-    // In production, this would be the actual Runway API call:
-    /*
-    const runwayResponse = await fetch('https://api.runwayml.com/v1/generate/video', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.RUNWAY_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gen-4-turbo',
-        input: {
-          image_url: imageUrl,
-          prompt: fullPrompt,
-          duration: duration,
-          motion_amount: motionIntensity / 100,
-          audio_url: lipSync ? audioUrl : undefined,
-          enable_lip_sync: lipSync,
-        },
-      }),
+    // Initialize RunwayML client
+    const runwayClient = getRunwayClient();
+
+    // Generate video using real RunwayML API
+    const task = await runwayClient.generateVideo({
+      imageUrl,
+      prompt: fullPrompt,
+      duration: validDuration,
+      model: 'gen4_turbo',
+      ratio: '1280:720', // Default aspect ratio
     });
 
-    const runwayData = await runwayResponse.json();
-    */
+    if (task.status === 'FAILED' || !task.id) {
+      console.error('RunwayML task creation failed:', task.error);
+      return res.status(500).json({
+        error: task.error || 'Failed to create video generation task',
+      });
+    }
 
-    // Simulate processing
-    await simulateProcessing(duration);
+    const jobId = task.id;
+    console.log('RunwayML task created:', jobId);
 
-    // Generate mock response
-    const videoUrl = generateMockVideoUrl(req.body);
-    const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Create scene folders if project info provided
+    if (projectId && sceneId) {
+      await createSceneFolders(projectId, sceneId);
+    }
 
-    // Return successful response
-    res.status(200).json({
-      videoUrl,
+    // Send initial WebSocket update
+    wsManager.emit('video_generation_started', {
       jobId,
-      status: 'completed',
-      duration,
+      projectId,
+      sceneId,
+      status: 'processing',
+      progress: 0,
+    });
+
+    // Start polling for completion in the background
+    (async () => {
+      try {
+        const videoUrl = await runwayClient.waitForCompletion(
+          jobId,
+          (progress) => {
+            // Send progress updates via WebSocket
+            wsManager.emit('video_generation_progress', {
+              jobId,
+              projectId,
+              sceneId,
+              progress,
+            });
+          },
+          300, // 5 minutes timeout
+          3    // 3 seconds poll interval
+        );
+
+        if (videoUrl) {
+          // Save video metadata if project info provided
+          if (projectId && sceneId) {
+            await saveVideoMetadata(projectId, sceneId, videoUrl, {
+              jobId,
+              prompt: fullPrompt,
+              duration: validDuration,
+              cameraMovement,
+              motionIntensity,
+            });
+          }
+
+          // Send completion via WebSocket
+          wsManager.emit('video_generation_completed', {
+            jobId,
+            projectId,
+            sceneId,
+            videoUrl,
+            status: 'completed',
+          });
+        } else {
+          // Send failure via WebSocket
+          wsManager.emit('video_generation_failed', {
+            jobId,
+            projectId,
+            sceneId,
+            error: 'Video generation failed or timed out',
+          });
+        }
+      } catch (error) {
+        console.error('Background polling error:', error);
+        wsManager.emit('video_generation_failed', {
+          jobId,
+          projectId,
+          sceneId,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    })();
+
+    // Return immediate response with job ID
+    res.status(200).json({
+      videoUrl: '', // Will be available after processing
+      jobId,
+      status: 'processing',
+      duration: validDuration,
     });
 
   } catch (error) {
     console.error('Video generation error:', error);
     res.status(500).json({ 
-      error: 'Failed to generate video. Please try again.', 
+      error: error instanceof Error ? error.message : 'Failed to generate video. Please try again.', 
     });
   }
 }

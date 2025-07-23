@@ -2,6 +2,7 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { StageNavigation, Stage, DEFAULT_PRODUCTION_STAGES } from './StageNavigation';
+import StoryboardHeader, { Scene } from '../storyboard/StoryboardHeader';
 import ConnectionStatus from '@/components/shared/ConnectionStatus';
 import { SparklesIcon } from '@heroicons/react/24/outline';
 import { wsManager } from '@/lib/websocket';
@@ -19,6 +20,8 @@ export const ProductionLayout: React.FC<ProductionLayoutProps> = ({
 }) => {
   const router = useRouter();
   const [stages, setStages] = useState<Stage[]>(DEFAULT_PRODUCTION_STAGES);
+  const [scenes, setScenes] = useState<Scene[]>([]);
+  const [currentScene, setCurrentScene] = useState<string>('');
   const [productionState, setProductionState] = useState({
     scriptUploaded: false,
     audioGenerated: false,
@@ -95,6 +98,17 @@ export const ProductionLayout: React.FC<ProductionLayoutProps> = ({
     router.push(`/production/${stageId}`);
   };
 
+  const handleSceneSelect = (sceneId: string) => {
+    setCurrentScene(sceneId);
+    // In a real implementation, this would trigger scene-specific data loading
+  };
+
+  const handleSceneUpdate = (sceneId: string, updates: Partial<Scene>) => {
+    setScenes(prev => prev.map(scene => 
+      scene.id === sceneId ? { ...scene, ...updates } : scene
+    ));
+  };
+
   return (
     <>
       <Head>
@@ -102,21 +116,21 @@ export const ProductionLayout: React.FC<ProductionLayoutProps> = ({
         <meta name="description" content="Multi-stage AI video production pipeline" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-zinc-950">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <header className="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center space-x-3">
                 <button 
                   onClick={() => router.push('/')}
-                  className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg hover:from-primary-600 hover:to-purple-700 transition-colors"
+                  className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-lg hover:from-emerald-600 hover:to-blue-700 transition-colors"
                 >
                   <SparklesIcon className="h-6 w-6 text-white" />
                 </button>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">Evergreen AI Production</h1>
-                  <p className="text-sm text-gray-500">Audio-First Video Pipeline</p>
+                  <h1 className="text-xl font-bold text-zinc-100">Evergreen AI Production</h1>
+                  <p className="text-sm text-zinc-400">Audio-First Video Pipeline</p>
                 </div>
               </div>
               
@@ -124,6 +138,15 @@ export const ProductionLayout: React.FC<ProductionLayoutProps> = ({
             </div>
           </div>
         </header>
+
+        {/* Storyboard Header - Always Visible */}
+        <StoryboardHeader
+          scenes={scenes}
+          currentScene={currentScene}
+          onSceneSelect={handleSceneSelect}
+          onSceneUpdate={handleSceneUpdate}
+          className="sticky top-16 z-40"
+        />
 
         {/* Stage Navigation */}
         <StageNavigation 

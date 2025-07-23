@@ -334,23 +334,23 @@ export default function Home() {
         <meta name="description" content="Create stunning AI-generated videos from text prompts" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-zinc-950">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <header className="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center space-x-3">
-                <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg">
+                <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-lg">
                   <SparklesIcon className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">Evergreen AI</h1>
-                  <p className="text-sm text-gray-500">Video Generation Pipeline</p>
+                  <h1 className="text-xl font-bold text-zinc-100">Evergreen AI</h1>
+                  <p className="text-sm text-zinc-400">Video Generation Pipeline</p>
                 </div>
               </div>
               
               <div className="flex items-center space-x-4">
-                <div className="hidden sm:flex items-center space-x-6 text-sm text-gray-600">
+                <div className="hidden sm:flex items-center space-x-6 text-sm text-zinc-400">
                   <div className="flex items-center space-x-1">
                     <CpuChipIcon className="h-4 w-4" />
                     <span>System Load: {Math.round(systemStatus.systemLoad * 100)}%</span>
@@ -415,35 +415,35 @@ export default function Home() {
               {!currentJob && !isGenerating && (
                 <div className="card">
                   <div className="card-body text-center py-16">
-                    <div className="mx-auto w-24 h-24 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full flex items-center justify-center mb-6">
+                    <div className="mx-auto w-24 h-24 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-full flex items-center justify-center mb-6">
                       <BoltIcon className="h-12 w-12 text-white" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                    <h2 className="text-2xl font-bold text-zinc-100 mb-4">
                       Ready to Create Amazing Videos
                     </h2>
-                    <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                    <p className="text-zinc-400 mb-8 max-w-md mx-auto">
                       Transform your ideas into stunning AI-generated videos. Simply describe what you want to see, 
                       and our advanced pipeline will bring it to life.
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto text-sm">
-                      <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg">
-                        <SparklesIcon className="h-8 w-8 text-primary-600 mb-2" />
-                        <h3 className="font-medium text-gray-900">AI-Powered</h3>
-                        <p className="text-gray-600 text-center">
+                      <div className="flex flex-col items-center p-4 bg-zinc-800 rounded-lg">
+                        <SparklesIcon className="h-8 w-8 text-emerald-400 mb-2" />
+                        <h3 className="font-medium text-zinc-100">AI-Powered</h3>
+                        <p className="text-zinc-400 text-center">
                           Uses DALL-E 3 for stunning image generation
                         </p>
                       </div>
-                      <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg">
-                        <FilmIcon className="h-8 w-8 text-primary-600 mb-2" />
-                        <h3 className="font-medium text-gray-900">Video Creation</h3>
-                        <p className="text-gray-600 text-center">
+                      <div className="flex flex-col items-center p-4 bg-zinc-800 rounded-lg">
+                        <FilmIcon className="h-8 w-8 text-emerald-400 mb-2" />
+                        <h3 className="font-medium text-zinc-100">Video Creation</h3>
+                        <p className="text-zinc-400 text-center">
                           RunwayML integration for smooth video generation
                         </p>
                       </div>
-                      <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg">
-                        <BoltIcon className="h-8 w-8 text-primary-600 mb-2" />
-                        <h3 className="font-medium text-gray-900">Real-time</h3>
-                        <p className="text-gray-600 text-center">
+                      <div className="flex flex-col items-center p-4 bg-zinc-800 rounded-lg">
+                        <BoltIcon className="h-8 w-8 text-emerald-400 mb-2" />
+                        <h3 className="font-medium text-zinc-100">Real-time</h3>
+                        <p className="text-zinc-400 text-center">
                           Live progress tracking and instant previews
                         </p>
                       </div>
@@ -456,26 +456,26 @@ export default function Home() {
               {jobHistory.length > 0 && !isGenerating && (
                 <div className="card">
                   <div className="card-header">
-                    <h3 className="text-lg font-semibold text-gray-900">Recent Generations</h3>
+                    <h3 className="text-lg font-semibold text-zinc-100">Recent Generations</h3>
                   </div>
-                  <div className="divide-y divide-gray-200">
+                  <div className="divide-y divide-zinc-800">
                     {jobHistory.slice(0, 5).map((job) => (
-                      <div key={job.id} className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                      <div key={job.id} className="p-4 hover:bg-zinc-800 transition-colors cursor-pointer"
                         onClick={() => setCurrentJob(job)}>
                         <div className="flex items-center justify-between">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
+                            <p className="text-sm font-medium text-zinc-100 truncate">
                               {job.prompt}
                             </p>
                             <div className="flex items-center space-x-2 mt-1">
                               <span className={cn('status-badge', `status-${job.status}`)}>
                                 {job.status}
                               </span>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-zinc-500">
                                 DALL-E 3
                               </span>
                               {job.cost && (
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-zinc-500">
                                   ${job.cost.total.toFixed(4)}
                                 </span>
                               )}
@@ -483,7 +483,7 @@ export default function Home() {
                           </div>
                           {job.videoUrl && (
                             <div className="ml-4">
-                              <FilmIcon className="h-5 w-5 text-primary-600" />
+                              <FilmIcon className="h-5 w-5 text-emerald-400" />
                             </div>
                           )}
                         </div>
@@ -497,10 +497,10 @@ export default function Home() {
         </main>
 
         {/* Footer */}
-        <footer className="border-t border-gray-200 bg-white mt-16">
+        <footer className="border-t border-zinc-800 bg-zinc-900 mt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="text-center">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-zinc-400">
                 Powered by DALL-E 3 and RunwayML • Built with Next.js and TypeScript
               </p>
             </div>

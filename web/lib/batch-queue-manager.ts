@@ -216,7 +216,7 @@ export class IntelligentBatchQueueManager extends EventEmitter {
    */
   async cancelJob(jobId: string): Promise<boolean> {
     // Remove from queues
-    for (const [type, queue] of this.queues.entries()) {
+    for (const [, queue] of this.queues.entries()) {
       const index = queue.findIndex(job => job.id === jobId);
       if (index !== -1) {
         queue.splice(index, 1);
@@ -441,7 +441,6 @@ export class IntelligentBatchQueueManager extends EventEmitter {
         
         setTimeout(() => {
           // Add back to queue with lower priority
-          const originalPriority = job.priority;
           if (job.priority !== 'low') {
             const priorities = ['urgent', 'high', 'medium', 'low'];
             const currentIndex = priorities.indexOf(job.priority);
@@ -564,7 +563,6 @@ export class IntelligentBatchQueueManager extends EventEmitter {
     }
 
     // Calculate cost per hour
-    const startTime = Date.now() - (60 * 60 * 1000); // 1 hour ago
     this.resourceUsage.costPerHour = this.stats.totalCost; // Simplified calculation
   }
 

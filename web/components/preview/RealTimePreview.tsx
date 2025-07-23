@@ -21,7 +21,7 @@ import {
   EyeOff,
   Settings
 } from 'lucide-react';
-import { useWebSocket } from '../../lib/websocket';
+import { useWebSocket } from '../../hooks/useWebSocket';
 import { performanceMonitor } from '../../lib/performance-monitor';
 
 interface PreviewFrame {
@@ -96,7 +96,7 @@ export const RealTimePreview: React.FC<RealTimePreviewProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const refreshIntervalRef = useRef<NodeJS.Timeout>();
 
-  const { socket, isConnected } = useWebSocket();
+  const { socket, isConnected, subscribe, unsubscribe, emit } = useWebSocket();
 
   // Initialize preview system
   useEffect(() => {
@@ -134,16 +134,16 @@ export const RealTimePreview: React.FC<RealTimePreviewProps> = ({
       }
     };
 
-    socket.on('preview_frame', handlePreviewFrame);
-    socket.on('preview_update', handlePreviewUpdate);
-    socket.on('preview_error', handlePreviewError);
+    subscribe('preview_frame', handlePreviewFrame);
+    subscribe('preview_update', handlePreviewUpdate);
+    subscribe('preview_error', handlePreviewError);
 
     return () => {
-      socket.off('preview_frame', handlePreviewFrame);
-      socket.off('preview_update', handlePreviewUpdate);
-      socket.off('preview_error', handlePreviewError);
+      unsubscribe('preview_frame', handlePreviewFrame);
+      unsubscribe('preview_update', handlePreviewUpdate);
+      unsubscribe('preview_error', handlePreviewError);
     };
-  }, [socket, jobId, onError]);
+  }, [socket, jobId, onError, subscribe, unsubscribe]);
 
   // Auto-refresh logic
   useEffect(() => {
@@ -172,7 +172,7 @@ export const RealTimePreview: React.FC<RealTimePreviewProps> = ({
 
     // Request initial preview data
     if (socket && jobId) {
-      socket.emit('start_preview', {
+      emit('start_preview', {
         jobId,
         stage,
         quality: state.quality,
@@ -186,7 +186,7 @@ export const RealTimePreview: React.FC<RealTimePreviewProps> = ({
       performanceMonitor.recordInteraction('preview_start', 'RealTimePreview', 0, true);
       setConnectionStatus('connected');
     }
-  }, [socket, jobId, stage, enableAudio, enableVideo, maxFrames, state.quality]);
+  }, [socket, jobId, stage, enableAudio, enableVideo, maxFrames, state.quality, emit]);
 
   const stopPreview = useCallback(() => {
     setState(prev => ({
@@ -196,22 +196,22 @@ export const RealTimePreview: React.FC<RealTimePreviewProps> = ({
     }));
 
     if (socket && jobId) {
-      socket.emit('stop_preview', { jobId });
+      emit('stop_preview', { jobId });
     }
 
     setConnectionStatus('disconnected');
     performanceMonitor.recordInteraction('preview_stop', 'RealTimePreview', 0, true);
-  }, [socket, jobId]);
+  }, [socket, jobId, emit]);
 
   const requestPreviewUpdate = useCallback(() => {
     if (socket && jobId && state.isActive) {
-      socket.emit('request_preview_update', {
+      emit('request_preview_update', {
         jobId,
         stage,
         timestamp: Date.now()
       });
     }
-  }, [socket, jobId, stage, state.isActive]);
+  }, [socket, jobId, stage, state.isActive, emit]);
 
   const handleNewFrame = useCallback((frame: PreviewFrame) => {
     setState(prev => {

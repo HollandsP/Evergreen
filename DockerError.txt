@@ -1,0 +1,78 @@
+PS C:\Users\holla\OneDrive\Desktop\CodeProjects\Evergreen>  ./deploy-windows.ps1
+Evergreen AI Video Pipeline - Windows PowerShell Deployment
+=============================================================
+
+[SUCCESS] Docker is running
+21:13:57 Starting pre-deployment checks...
+21:13:57 Building images with optimizations...
+Dockerfile:20
+--------------------
+  18 |     
+  19 |     # Build the application
+  20 | >>> RUN npm run build
+  21 |     
+  22 |     # Production stage
+--------------------
+target web: failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1
+145  /usr/local/bin/dockerd --config-file /run/config/docker/daemon.json --containerd /run/containerd/containerd.sock --pidfile /run/desktop/docker.pid --swarm-default-advertise-addr=192.168.65.3 --host-gateway-ip 192.168.65.254
+github.com/moby/buildkit/executor/runcexecutor.exitError
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/executor/runcexecutor/executor.go:391
+github.com/moby/buildkit/executor/runcexecutor.(*runcExecutor).Run
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/executor/runcexecutor/executor.go:339
+github.com/moby/buildkit/solver/llbsolver/ops.(*ExecOp).Exec
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/solver/llbsolver/ops/exec.go:492
+github.com/moby/buildkit/solver.(*sharedOp).Exec.func2
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/solver/jobs.go:1106
+github.com/moby/buildkit/util/flightcontrol.(*call[...]).run
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/util/flightcontrol/flightcontrol.go:122
+sync.(*Once).doSlow
+        /usr/local/go/src/sync/once.go:78
+sync.(*Once).Do
+        /usr/local/go/src/sync/once.go:69
+runtime.goexit
+        /usr/local/go/src/runtime/asm_amd64.s:1700
+
+31272 v0.24.0-desktop.2 C:\Program Files\Docker\cli-plugins\docker-buildx.exe bake --file - --progress rawjson --metadata-file C:\Users\holla\AppData\Local\Temp\compose-build-metadataFile-58184555.json --allow fs.read=C:\Users\holla\OneDrive\Desktop\CodeProjects\Evergreen\web --allow fs.read=C:\Users\holla\OneDrive\Desktop\CodeProjects\Evergreen
+google.golang.org/grpc.(*ClientConn).Invoke
+        google.golang.org/grpc@v1.69.4/call.go:35
+github.com/moby/buildkit/api/services/control.(*controlClient).Solve
+        github.com/moby/buildkit@v0.22.0/api/services/control/control_grpc.pb.go:88
+github.com/moby/buildkit/client.(*Client).solve.func2
+        github.com/moby/buildkit@v0.22.0/client/solve.go:268
+golang.org/x/sync/errgroup.(*Group).Go.func1
+        golang.org/x/sync@v0.13.0/errgroup/errgroup.go:79
+runtime.goexit
+        runtime/asm_amd64.s:1700
+
+31272 v0.24.0-desktop.2 C:\Program Files\Docker\cli-plugins\docker-buildx.exe bake --file - --progress rawjson --metadata-file C:\Users\holla\AppData\Local\Temp\compose-build-metadataFile-58184555.json --allow fs.read=C:\Users\holla\OneDrive\Desktop\CodeProjects\Evergreen\web --allow fs.read=C:\Users\holla\OneDrive\Desktop\CodeProjects\Evergreen
+github.com/docker/buildx/build.BuildWithResultHandler.func2.5.2
+        github.com/docker/buildx/build/build.go:591
+github.com/docker/buildx/build.BuildWithResultHandler.func2.5
+        github.com/docker/buildx/build/build.go:597
+golang.org/x/sync/errgroup.(*Group).Go.func1
+        golang.org/x/sync@v0.13.0/errgroup/errgroup.go:79
+
+145  /usr/local/bin/dockerd --config-file /run/config/docker/daemon.json --containerd /run/containerd/containerd.sock --pidfile /run/desktop/docker.pid --swarm-default-advertise-addr=192.168.65.3 --host-gateway-ip 192.168.65.254
+github.com/moby/buildkit/solver.(*edge).execOp
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/solver/edge.go:963
+github.com/moby/buildkit/solver/internal/pipe.NewWithFunction[...].func2
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/solver/internal/pipe/pipe.go:78
+runtime.goexit
+        /usr/local/go/src/runtime/asm_amd64.s:1700
+
+31272 v0.24.0-desktop.2 C:\Program Files\Docker\cli-plugins\docker-buildx.exe bake --file - --progress rawjson --metadata-file C:\Users\holla\AppData\Local\Temp\compose-build-metadataFile-58184555.json --allow fs.read=C:\Users\holla\OneDrive\Desktop\CodeProjects\Evergreen\web --allow fs.read=C:\Users\holla\OneDrive\Desktop\CodeProjects\Evergreen       
+github.com/moby/buildkit/client.(*Client).solve.func2
+        github.com/moby/buildkit@v0.22.0/client/solve.go:285
+golang.org/x/sync/errgroup.(*Group).Go.func1
+        golang.org/x/sync@v0.13.0/errgroup/errgroup.go:79
+
+145  /usr/local/bin/dockerd --config-file /run/config/docker/daemon.json --containerd /run/containerd/containerd.sock --pidfile /run/desktop/docker.pid --swarm-default-advertise-addr=192.168.65.3 --host-gateway-ip 192.168.65.254        
+github.com/moby/buildkit/solver/llbsolver/ops.(*ExecOp).Exec
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/solver/llbsolver/ops/exec.go:513
+github.com/moby/buildkit/solver.(*sharedOp).Exec.func2
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/solver/jobs.go:1106
+
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/zk7bjiz7x3wfrpmq3lgpn9oqe
+[ERROR] Build failed. Check the output above for errors.
+Press Enter to exit:

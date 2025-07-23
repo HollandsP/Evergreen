@@ -10,20 +10,18 @@ import { Progress } from '../ui/progress';
 import { Badge } from '../ui/badge';
 import { 
   Upload, 
-  X, 
   File, 
   Image, 
   Video, 
   Music, 
   FileText,
   AlertCircle,
-  CheckCircle2,
   RefreshCw,
   Download,
   Eye,
   Trash2,
   FolderOpen,
-  CloudUpload,
+  UploadCloud,
   Pause,
   Play
 } from 'lucide-react';
@@ -241,7 +239,7 @@ export const AdvancedFileUploader: React.FC<AdvancedFileUploaderProps> = ({
 
     if (file.type.startsWith('image/')) {
       return new Promise((resolve) => {
-        const img = new Image();
+        const img = new window.Image();
         img.onload = () => {
           metadata.dimensions = { width: img.width, height: img.height };
           resolve(metadata);
@@ -461,7 +459,7 @@ export const AdvancedFileUploader: React.FC<AdvancedFileUploaderProps> = ({
         uploadFile.file.type.startsWith('image/') ? 'image' : 
         uploadFile.file.type.startsWith('video/') ? 'video' : 'audio',
         uploadFile.file.type.split('/')[1] || 'unknown',
-        await uploadFile.file.arrayBuffer(),
+        result.url, // Pass URL instead of buffer data in browser environment
         uploadFile.metadata?.dimensions ? 
           `${uploadFile.metadata.dimensions.width}x${uploadFile.metadata.dimensions.height}` : 
           undefined,
@@ -469,7 +467,7 @@ export const AdvancedFileUploader: React.FC<AdvancedFileUploaderProps> = ({
       );
 
       performanceMonitor.recordInteraction('file_uploaded', 'AdvancedFileUploader', 
-        Date.now() - (uploadFile.metadata?.uploadStartTime || Date.now()), true);
+        0, true); // Upload time tracking not implemented
 
     } catch (error: any) {
       if (error.name === 'AbortError') {
@@ -491,7 +489,7 @@ export const AdvancedFileUploader: React.FC<AdvancedFileUploaderProps> = ({
         onUploadError?.(uploadFile, errorMessage);
 
         performanceMonitor.recordInteraction('file_upload_failed', 'AdvancedFileUploader', 
-          Date.now() - (uploadFile.metadata?.uploadStartTime || Date.now()), false, errorMessage);
+          0, false, errorMessage); // Upload time tracking not implemented
       }
     } finally {
       uploadControllersRef.current.delete(uploadFile.id);
@@ -667,7 +665,7 @@ export const AdvancedFileUploader: React.FC<AdvancedFileUploaderProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <CloudUpload className="w-5 h-5" />
+            <UploadCloud className="w-5 h-5" />
             <span>File Upload</span>
             <Badge variant="secondary">
               {files.length}/{config.maxFiles}

@@ -4,7 +4,35 @@
 
 This document contains critical instructions for AI agents (Claude, GPT, Gemini, etc.) working on the AI Content Generation Pipeline project. **ALL AI AGENTS MUST READ AND FOLLOW THESE GUIDELINES.**
 
----
+---current Mission:  Read and retain agent_work_log.md and readme.md to understand the project and where we are now. Analyze(codebase and files)→ Research(implementation methods, potential solutions, working examples similar projects, etc. And use the internet!)→ Plan Improvements(Focused entirely on        
+what I have requested), remember not to deviate if implementation planning may be too challenging, use tools and sub agents to compensate→ Confirm plan with me→ Create Next steps document that shows your plan and gives the user a prompt for each section that can be fed to different
+agents or sub-agents to accomplish tasks/implementation of features simultaneously.
+      Using parallel sub-agents to maximize efficiency and ensure no fafied tests or results. Do not deviATE FROM PLAN, EVEN SLIGHTLY, UNLESS I have approved. DO NOT substitute assets,features,etc. with simpler ones, just so you can "pass" your testing or fake a features functionality.     
+ You must implement: RunwayML API- Image to Video(also has prompt). I know it can be done, search and read RunwayML API docs.
+
+Also plan for restructuring the pipeline and UI. Pipeline/workflow should be:
+-user brings a script of the video they want to make
+-they upload it to first section on UI website called "Divide script into scenes...". 
+-In that section, they should have the ability to upload script, and have AI break the script into scenes or chunks that can be used as prompts and also set up folders for each scene to save images etc. in, for later editing.
+    *In same first section, They should also be able to edit/change details about the project, and details about the script sharding/division. 
+-They should also have a visual "web tree" style graphic that, once analyzed and divided, shows the script title and all of the scenes broken down chronologically from top to bottom(top should be first scene and descend through the other scenes but also have proper folder structure 
+much like a windows explorer). 
+- the user then starts to generate images(next section on UI/website) using, and editing, the prompts that were pre generated based on script sharding.
+-ages should be autosaved to folder in the project, for later usage to generate video and for editor usage(must be labeled properly to avoid confusion). User should be able to acess photos folder in this section of UI
+-after photos are generated, next section is audio generation. Give user prompt box if possible. create voiceovers, lipsync, etc.
+- should be requesting multiple audio files, broken down by scene and any additional features user wnats to use from elevenlabs api. User can choose to add more audio if needed, and/or music files. After audio is generated, user proceeds to next section
+-video generation is next. Again, the idea is to create shorter clips based on scene prompts, save them in specific scene folder.
+-once all clips(audio and video) are saved/generated, next section is editing.
+-I would like editing to be done by an AI agent if possible. He should be able to analyze the script/scenes and take media files in scenes folders, and create final video. This section should also have a chat window so user can request editing changes as well.(feel free to suggest 
+different ways to accomplish editing, but only if they would give superior results.)
+
+All API keys were already added to .env, but last agent said he didn't have them. I think they possibly got moved, Evergreen should be root folder.
+The goal is to create a simple but extremely capable, one stop shop to create custom youtube videos. From shorts to 10 minute stories, Evergreen should be a flexible and useful tool for anyone looking to start a youtube channel. If you are unsure, or need more context with anything, 
+just let me know before altering any plans. a direct to youtube upload option would be cool also. Otherwise, also give them a way to save locally.
+
+*When creating plan, write sperate prompts for different agents or sub-agents to work simultaneously. Also reccomend which SuperClaude persona you reccomend for the tasks.
+
+*no preference on video editor, preferably find a way a chatbot could compile and edit videos in the way we want. --Ultrathin
 
 ## 🚨 MANDATORY: Update Work Log
 

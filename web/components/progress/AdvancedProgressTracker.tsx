@@ -9,24 +9,20 @@ import { Progress } from '../ui/progress';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { 
-  Play, 
   Pause, 
   AlertCircle, 
   CheckCircle2, 
   Clock, 
   Activity,
-  TrendingUp,
-  TrendingDown,
   Zap,
   Target,
-  BarChart3,
   Timer,
   DollarSign,
   Cpu,
   HardDrive,
   Wifi
 } from 'lucide-react';
-import { useWebSocket } from '../../lib/websocket';
+import { useWebSocket } from '../../hooks/useWebSocket';
 import { performanceMonitor } from '../../lib/performance-monitor';
 
 interface ProgressStep {
@@ -109,14 +105,14 @@ export const AdvancedProgressTracker: React.FC<ProgressTrackerProps> = ({
   const [progress, setProgress] = useState<PipelineProgress | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedStep, setSelectedStep] = useState<string | null>(null);
-  const [performanceHistory, setPerformanceHistory] = useState<Array<{
+  const [_performanceHistory, setPerformanceHistory] = useState<Array<{
     timestamp: Date;
     throughput: number;
     resourceUsage: number;
     cost: number;
   }>>([]);
 
-  const { socket, isConnected } = useWebSocket();
+  const { socket, isConnected, subscribe, unsubscribe, emit } = useWebSocket();
 
   // Initialize progress tracking
   useEffect(() => {
@@ -129,6 +125,7 @@ export const AdvancedProgressTracker: React.FC<ProgressTrackerProps> = ({
 
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [jobId, isConnected, enableRealTimeUpdates, updateInterval]);
 
   // Handle WebSocket messages
@@ -159,24 +156,24 @@ export const AdvancedProgressTracker: React.FC<ProgressTrackerProps> = ({
       }
     };
 
-    socket.on('progress_update', handleProgressUpdate);
-    socket.on('step_update', handleStepUpdate);
-    socket.on('progress_complete', handleProgressComplete);
-    socket.on('progress_error', handleProgressError);
+    subscribe('progress_update', handleProgressUpdate);
+    subscribe('step_update', handleStepUpdate);
+    subscribe('progress_complete', handleProgressComplete);
+    subscribe('progress_error', handleProgressError);
 
     return () => {
-      socket.off('progress_update', handleProgressUpdate);
-      socket.off('step_update', handleStepUpdate);
-      socket.off('progress_complete', handleProgressComplete);
-      socket.off('progress_error', handleProgressError);
+      unsubscribe('progress_update', handleProgressUpdate);
+      unsubscribe('step_update', handleStepUpdate);
+      unsubscribe('progress_complete', handleProgressComplete);
+      unsubscribe('progress_error', handleProgressError);
     };
-  }, [socket, jobId]);
+  }, [socket, jobId, subscribe, unsubscribe]);
 
   const requestProgressUpdate = useCallback(() => {
     if (socket && jobId) {
-      socket.emit('get_progress', { jobId });
+      emit('get_progress', { jobId });
     }
-  }, [socket, jobId]);
+  }, [socket, jobId, emit]);
 
   const updateProgress = useCallback((newProgress: PipelineProgress) => {
     setProgress(prev => {

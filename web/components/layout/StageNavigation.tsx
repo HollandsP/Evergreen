@@ -27,17 +27,17 @@ interface StageNavigationProps {
 }
 
 const statusColors = {
-  pending: 'border-gray-300 bg-white text-gray-500',
-  in_progress: 'border-primary-500 bg-primary-50 text-primary-600',
-  completed: 'border-green-500 bg-green-50 text-green-600',
-  disabled: 'border-gray-200 bg-gray-50 text-gray-400',
+  pending: 'border-zinc-700 bg-zinc-800 text-zinc-300',
+  in_progress: 'border-emerald-500 bg-emerald-900/20 text-emerald-400',
+  completed: 'border-green-500 bg-green-900/20 text-green-400',
+  disabled: 'border-zinc-700 bg-zinc-900 text-zinc-600',
 };
 
 const statusTextColors = {
-  pending: 'text-gray-500',
-  in_progress: 'text-primary-600',
-  completed: 'text-green-600',
-  disabled: 'text-gray-400',
+  pending: 'text-zinc-400',
+  in_progress: 'text-emerald-400',
+  completed: 'text-green-400',
+  disabled: 'text-zinc-600',
 };
 
 export const StageNavigation: React.FC<StageNavigationProps> = ({
@@ -58,7 +58,7 @@ export const StageNavigation: React.FC<StageNavigationProps> = ({
   };
 
   return (
-    <div className="bg-white border-b border-gray-200">
+    <div className="bg-zinc-900 border-b border-zinc-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="flex space-x-8 overflow-x-auto py-4" aria-label="Production Stages">
           {stages.map((stage, index) => {
@@ -73,10 +73,10 @@ export const StageNavigation: React.FC<StageNavigationProps> = ({
                   className={cn(
                     'group flex items-center space-x-3 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200',
                     isActive
-                      ? 'bg-primary-100 text-primary-700 border border-primary-200'
+                      ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-600/50'
                       : stage.isAvailable
-                        ? 'hover:bg-gray-50 text-gray-600 border border-transparent hover:border-gray-200'
-                        : 'cursor-not-allowed opacity-50 text-gray-400 border border-transparent',
+                        ? 'hover:bg-zinc-800 text-zinc-300 border border-transparent hover:border-zinc-700'
+                        : 'cursor-not-allowed opacity-50 text-zinc-600 border border-transparent',
                   )}
                 >
                   <div
@@ -93,7 +93,7 @@ export const StageNavigation: React.FC<StageNavigationProps> = ({
                   </div>
                   
                   <div className="text-left">
-                    <div className={cn('font-medium', isActive ? 'text-primary-700' : '')}>
+                    <div className={cn('font-medium', isActive ? 'text-emerald-400' : '')}>
                       Stage {index + 1}: {stage.name}
                     </div>
                     <div className={cn('text-xs', statusTextColors[stage.status])}>
@@ -105,7 +105,7 @@ export const StageNavigation: React.FC<StageNavigationProps> = ({
                 {index < stages.length - 1 && (
                   <div className="flex-shrink-0">
                     <svg
-                      className="h-5 w-5 text-gray-300"
+                      className="h-5 w-5 text-zinc-600"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       aria-hidden="true"
@@ -144,8 +144,8 @@ export const DEFAULT_PRODUCTION_STAGES: Stage[] = [
     description: 'Generate narration with ElevenLabs',
     icon: SpeakerWaveIcon,
     path: '/production/audio',
-    status: 'disabled',
-    isAvailable: false,
+    status: 'pending',
+    isAvailable: true,
   },
   {
     id: 'images',
@@ -153,8 +153,8 @@ export const DEFAULT_PRODUCTION_STAGES: Stage[] = [
     description: 'Create scene images with DALL-E 3',
     icon: PhotoIcon,
     path: '/production/images',
-    status: 'disabled',
-    isAvailable: false,
+    status: 'pending',
+    isAvailable: true,
   },
   {
     id: 'videos',
@@ -162,8 +162,8 @@ export const DEFAULT_PRODUCTION_STAGES: Stage[] = [
     description: 'Convert images to video with RunwayML',
     icon: VideoCameraIcon,
     path: '/production/videos',
-    status: 'disabled',
-    isAvailable: false,
+    status: 'pending',
+    isAvailable: true,
   },
   {
     id: 'assembly',
@@ -171,8 +171,8 @@ export const DEFAULT_PRODUCTION_STAGES: Stage[] = [
     description: 'Combine clips into final video',
     icon: FilmIcon,
     path: '/production/assembly',
-    status: 'disabled',
-    isAvailable: false,
+    status: 'pending',
+    isAvailable: true,
   },
 ];
 

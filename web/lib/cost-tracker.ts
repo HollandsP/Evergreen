@@ -174,7 +174,7 @@ export class AdvancedCostTracker extends EventEmitter {
     amount: number,
     units: number,
     unitType: CostEntry['unitType'],
-    metadata: CostEntry['metadata'] = {},
+    metadata: CostEntry['metadata'] = { provider: 'unknown' },
     tags: string[] = []
   ): CostEntry {
     const costEntry: CostEntry = {
@@ -417,7 +417,14 @@ export class AdvancedCostTracker extends EventEmitter {
     potentialSavings: number;
     actions: string[];
   }> {
-    const suggestions = [];
+    const suggestions: Array<{
+      type: 'service' | 'operation' | 'usage_pattern' | 'budget' | 'efficiency';
+      priority: 'high' | 'medium' | 'low';
+      title: string;
+      description: string;
+      potentialSavings: number;
+      actions: string[];
+    }> = [];
     const recentEntries = this.getRecentEntries(7); // Last 7 days
 
     // High-cost services analysis
@@ -459,7 +466,6 @@ export class AdvancedCostTracker extends EventEmitter {
     }, {} as Record<string, { count: number; totalCost: number; totalUnits: number }>);
 
     Object.entries(operationStats).forEach(([operation, stats]) => {
-      const costPerUnit = stats.totalCost / stats.totalUnits;
       const avgCostPerCall = stats.totalCost / stats.count;
 
       if (avgCostPerCall > 1) { // Expensive operations
@@ -481,7 +487,7 @@ export class AdvancedCostTracker extends EventEmitter {
 
     // Usage pattern inefficiencies
     const hourlyUsage = this.analyzeHourlyUsage(recentEntries);
-    const peakHours = hourlyUsage.filter((usage, hour) => usage > hourlyUsage.reduce((a, b) => a + b) / 24 * 2);
+    const peakHours = hourlyUsage.filter((usage) => usage > hourlyUsage.reduce((a, b) => a + b) / 24 * 2);
 
     if (peakHours.length > 0) {
       suggestions.push({
@@ -904,27 +910,27 @@ export class AdvancedCostTracker extends EventEmitter {
     }
   }
 
-  private sendEmailAlert(rule: BudgetRule, severity: string, config: any): void {
+  private sendEmailAlert(rule: BudgetRule, severity: string, _config: any): void {
     // Implement email alert sending
     this.logger.info('Email alert sent', { ruleId: rule.id, severity }, ['alerts']);
   }
 
-  private sendWebhookAlert(rule: BudgetRule, severity: string, config: any): void {
+  private sendWebhookAlert(rule: BudgetRule, severity: string, _config: any): void {
     // Implement webhook alert sending
     this.logger.info('Webhook alert sent', { ruleId: rule.id, severity }, ['alerts']);
   }
 
-  private applyThrottling(rule: BudgetRule, config: any): void {
+  private applyThrottling(rule: BudgetRule, _config: any): void {
     // Implement request throttling
     this.logger.warn('Throttling applied', { ruleId: rule.id }, ['throttling']);
   }
 
-  private applyBlocking(rule: BudgetRule, config: any): void {
+  private applyBlocking(rule: BudgetRule, _config: any): void {
     // Implement request blocking
-    this.logger.error('Blocking applied', { ruleId: rule.id }, ['blocking']);
+    this.logger.error('Blocking applied', undefined, { ruleId: rule.id }, ['blocking']);
   }
 
-  private applyScaleDown(rule: BudgetRule, config: any): void {
+  private applyScaleDown(rule: BudgetRule, _config: any): void {
     // Implement resource scaling down
     this.logger.info('Scale down applied', { ruleId: rule.id }, ['scaling']);
   }

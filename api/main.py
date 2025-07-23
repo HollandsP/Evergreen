@@ -12,7 +12,7 @@ import structlog
 
 from src.core.config import settings
 from api.json_utils import CustomJSONResponse
-from api.routes import projects, generation, health, auth, scripts
+from api.routes import projects, generation, health, auth, scripts, editor
 from api.middleware import (
     RequestIDMiddleware,
     LoggingMiddleware,
@@ -75,6 +75,7 @@ app.include_router(auth.router, prefix=settings.API_PREFIX)
 app.include_router(projects.router, prefix=settings.API_PREFIX)
 app.include_router(scripts.router, prefix=settings.API_PREFIX)
 app.include_router(generation.router, prefix=settings.API_PREFIX)
+app.include_router(editor.router, prefix=settings.API_PREFIX)
 
 @app.on_event("startup")
 async def startup_event():

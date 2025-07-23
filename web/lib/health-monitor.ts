@@ -4,7 +4,6 @@
  */
 
 import EventEmitter from 'events';
-import { performanceMonitor } from './performance-monitor';
 
 export interface HealthMetric {
   name: string;
@@ -309,7 +308,7 @@ export class AdvancedHealthMonitor extends EventEmitter {
     }
 
     // Analyze performance degradation
-    for (const [componentId, component] of this.components.entries()) {
+    for (const [, component] of this.components.entries()) {
       const responseTimeMetric = component.metrics.find(m => m.name === 'response_time');
       if (responseTimeMetric && responseTimeMetric.trend === 'degrading') {
         predictions.performanceDegradation.push({
@@ -845,9 +844,9 @@ export class AdvancedHealthMonitor extends EventEmitter {
   }
 
   private getRecommendedActions(
-    componentId: string, 
+    _componentId: string, 
     metric: string, 
-    severity: HealthAlert['severity']
+    _severity: HealthAlert['severity']
   ): string[] {
     const actionMap: Record<string, string[]> = {
       'response_time': [

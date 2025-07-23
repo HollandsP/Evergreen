@@ -694,7 +694,7 @@ export class StyleTemplateManager {
     templateId: string,
     rating: number,
     success: boolean,
-    feedback?: string
+    _feedback?: string
   ): void {
     const template = this.templates.get(templateId);
     if (!template) return;

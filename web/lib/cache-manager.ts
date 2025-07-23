@@ -370,11 +370,11 @@ export class AdvancedCacheManager {
     let costScore = 1;
 
     if ('quality' in entry) {
-      qualityScore = entry.quality || 0.5;
+      qualityScore = (entry as PromptCacheEntry).quality || 0.5;
     }
     
     if ('cost' in entry) {
-      costScore = Math.min(1, entry.cost / 10); // Higher cost = higher value
+      costScore = Math.min(1, (entry as PromptCacheEntry).cost / 10); // Higher cost = higher value
     }
 
     // Weighted combination
@@ -502,7 +502,6 @@ export class AdvancedCacheManager {
   }
 
   private async performRoutineCleanup(): Promise<void> {
-    const now = Date.now();
     let removedCount = 0;
 
     // Remove expired entries

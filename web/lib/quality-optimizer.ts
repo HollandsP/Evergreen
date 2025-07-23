@@ -598,8 +598,6 @@ export class DynamicQualityOptimizer {
   } {
     const profileUsage: Record<string, number> = {};
     let totalRating = 0;
-    let costVariance = 0;
-    let timeVariance = 0;
 
     this.history.forEach(entry => {
       profileUsage[entry.profile] = (profileUsage[entry.profile] || 0) + 1;
@@ -626,7 +624,7 @@ export class DynamicQualityOptimizer {
     return hash.toString(36);
   }
 
-  private findSimilarContent(contentHash: string, analysis: ContentAnalysis): HistoricalData[] {
+  private findSimilarContent(contentHash: string, _analysis: ContentAnalysis): HistoricalData[] {
     return this.history.filter(entry => {
       // Simple similarity check - in production, use more sophisticated matching
       return Math.abs(parseInt(entry.contentHash, 36) - parseInt(contentHash, 36)) < 1000;

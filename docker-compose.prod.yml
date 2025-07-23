@@ -1,0 +1,202 @@
+# Production-specific docker-compose override
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+version: '3.8'
+
+services:
+  # Web Frontend - Production optimizations
+  web:
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://api.your-domain.com
+      - NEXT_PUBLIC_WS_URL=wss://api.your-domain.com
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=Host(`your-domain.com`)"
+      - "traefik.http.routers.web.tls=true"
+      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # API Service - Production optimizations
+  api:
+    restart: always
+    environment:
+      - APP_ENV=production
+      - DEBUG=false
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`api.your-domain.com`)"
+      - "traefik.http.routers.api.tls=true"
+      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # Celery Worker - Production scaling
+  worker:
+    restart: always
+    deploy:
+      replicas: 5  # Scale based on your server capacity
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    environment:
+      - APP_ENV=production
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # Database - Production configuration
+  db:
+    restart: always
+    environment:
+      - POSTGRES_SHARED_PRELOAD_LIBRARIES=pg_stat_statements
+      - POSTGRES_MAX_CONNECTIONS=200
+      - POSTGRES_SHARED_BUFFERS=256MB
+      - POSTGRES_EFFECTIVE_CACHE_SIZE=1GB
+    command: >
+      postgres
+      -c log_statement=all
+      -c log_min_duration_statement=1000
+      -c log_checkpoints=on
+      -c log_connections=on
+      -c log_disconnections=on
+      -c shared_preload_libraries=pg_stat_statements
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/var/backups
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # Redis - Production configuration
+  redis:
+    restart: always
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 4gb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    volumes:
+      - redis_data:/data
+      - ./backups:/var/backups
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # Flower - Production security
+  flower:
+    restart: always
+    environment:
+      - FLOWER_BASIC_AUTH=${FLOWER_USER}:${FLOWER_PASSWORD}
+      - FLOWER_URL_PREFIX=/flower
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.flower.rule=Host(`monitor.your-domain.com`)"
+      - "traefik.http.routers.flower.tls=true"
+      - "traefik.http.routers.flower.tls.certresolver=letsencrypt"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # NGINX - Production reverse proxy with SSL
+  nginx:
+    image: nginx:alpine
+    container_name: evergreen-nginx-prod
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/docker/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./web/out:/usr/share/nginx/html:ro
+    depends_on:
+      - api
+      - web
+    networks:
+      - evergreen-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # Backup service
+  backup:
+    image: alpine:latest
+    container_name: evergreen-backup
+    restart: "no"  # Run manually or via cron
+    volumes:
+      - ./backups:/backups
+      - postgres_data:/var/lib/postgresql/data:ro
+      - redis_data:/var/lib/redis/data:ro
+      - ./scripts/backup.sh:/backup.sh:ro
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - BACKUP_S3_BUCKET=${BACKUP_S3_BUCKET}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    command: ["/backup.sh"]
+    depends_on:
+      - db
+      - redis
+    networks:
+      - evergreen-network
+    profiles:
+      - backup
+
+  # Log aggregation service
+  logspout:
+    image: gliderlabs/logspout:latest
+    container_name: evergreen-logs
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - ROUTE_URIS=syslog+tcp://logs.your-domain.com:5000
+    profiles:
+      - logging
+
+volumes:
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/evergreen/postgres
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/evergreen/redis
+
+networks:
+  evergreen-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

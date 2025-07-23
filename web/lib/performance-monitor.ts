@@ -899,7 +899,7 @@ export class AdvancedPerformanceMonitor extends EventEmitter {
     return issues.sort((a, b) => b.impact - a.impact);
   }
 
-  private generateRecommendations(analytics: any, summary: any): string[] {
+  private generateRecommendations(_analytics: any, summary: any): string[] {
     const recommendations: string[] = [];
 
     if (summary.avgResponseTime > 2000) {
@@ -924,7 +924,7 @@ export class AdvancedPerformanceMonitor extends EventEmitter {
   private generateInsights(
     metrics: Record<string, PerformanceMetric[]>,
     interactions: Record<string, UserInteractionMetric[]>,
-    health: SystemHealthMetric[]
+    _health: SystemHealthMetric[]
   ): string[] {
     const insights: string[] = [];
 

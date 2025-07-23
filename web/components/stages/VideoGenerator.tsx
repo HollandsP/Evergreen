@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Slider } from '../ui/slider';
@@ -13,6 +12,7 @@ import { Play, Video, Wand2, Loader2, Check, Camera, Film, Zap } from 'lucide-re
 import AudioSyncTimeline from '../video/AudioSyncTimeline';
 import LipSyncControls from '../video/LipSyncControls';
 import { useRouter } from 'next/router';
+import PromptEditor from '../shared/PromptEditor';
 
 interface Scene {
   id: string;
@@ -22,6 +22,7 @@ interface Scene {
   imageUrl?: string;
   audioUrl?: string;
   audioDuration?: number;
+  imagePrompt?: string;
   videoPrompt?: string;
   cameraMovement?: string;
   motionIntensity?: number;
@@ -76,18 +77,26 @@ export default function VideoGenerator({ onComplete }: VideoGeneratorProps) {
         const imageData = localStorage.getItem('imageData');
         const images = imageData ? JSON.parse(imageData) : {};
 
-        // Combine all data
-        const combinedScenes = parsedScenes.map((scene: any) => ({
-          ...scene,
-          audioUrl: audioFiles[scene.id]?.url,
-          audioDuration: audioFiles[scene.id]?.duration || 5,
-          imageUrl: images[scene.id],
-          videoPrompt: generateDefaultPrompt(scene),
-          cameraMovement: 'static',
-          motionIntensity: 50,
-          lipSyncEnabled: scene.type === 'dialogue' && scene.speaker,
-          videoStatus: 'pending',
-        }));
+        // Combine all data with prompt inheritance
+        const combinedScenes = parsedScenes.map((scene: any) => {
+          const imagePrompt = images[scene.id]?.prompt || '';
+          const inheritedVideoPrompt = imagePrompt 
+            ? `Convert this image to video: ${imagePrompt}. Add subtle motion and cinematic movement.`
+            : generateDefaultPrompt(scene);
+            
+          return {
+            ...scene,
+            audioUrl: audioFiles[scene.id]?.url,
+            audioDuration: audioFiles[scene.id]?.duration || 5,
+            imageUrl: images[scene.id]?.url || images[scene.id],
+            imagePrompt: imagePrompt,
+            videoPrompt: inheritedVideoPrompt,
+            cameraMovement: 'static',
+            motionIntensity: 50,
+            lipSyncEnabled: scene.type === 'dialogue' && scene.speaker,
+            videoStatus: 'pending',
+          };
+        });
 
         setScenes(combinedScenes);
         if (combinedScenes.length > 0) {
@@ -296,18 +305,20 @@ export default function VideoGenerator({ onComplete }: VideoGeneratorProps) {
                     )}
                   </div>
 
-                  {/* Prompt Editor */}
+                  {/* Universal Prompt Editor with Inheritance */}
                   <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="video-prompt">Video Generation Prompt</Label>
-                      <Textarea
-                        id="video-prompt"
-                        value={currentScene.videoPrompt || ''}
-                        onChange={(e) => updateScene(currentScene.id, { videoPrompt: e.target.value })}
-                        placeholder="Describe the motion and atmosphere..."
-                        className="mt-2 min-h-[100px]"
-                      />
-                    </div>
+                    <PromptEditor
+                      value={currentScene.videoPrompt || ''}
+                      onChange={(newPrompt) => updateScene(currentScene.id, { videoPrompt: newPrompt })}
+                      type="video"
+                      sceneMetadata={{
+                        sceneType: currentScene.type,
+                        audioDuration: currentScene.audioDuration,
+                      }}
+                      showEnhance={true}
+                      isInherited={!!currentScene.imagePrompt}
+                      inheritedFrom="from image prompt"
+                    />
 
                     {currentScene.type === 'dialogue' && currentScene.speaker && (
                       <LipSyncControls
