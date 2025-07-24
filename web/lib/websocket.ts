@@ -8,7 +8,8 @@ class WebSocketManager {
   private listeners: Map<string, Set<(data: any) => void>> = new Map();
 
   connect(url?: string): void {
-    const socketUrl = url || process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
+    // Use the Next.js server for Socket.io connection
+    const socketUrl = url || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
     
     if (this.socket?.connected) {
       return;
@@ -16,6 +17,7 @@ class WebSocketManager {
 
     try {
       this.socket = io(socketUrl, {
+        path: '/api/socket',  // Important: specify the Socket.io path
         transports: ['websocket', 'polling'],
         timeout: 20000,
         forceNew: true,
@@ -93,6 +95,21 @@ class WebSocketManager {
 
     this.socket.on('video_generation_failed', (data) => {
       this.emitToListeners('video_generation_failed', data);
+    });
+
+    // Script parsing events
+    this.socket.on('script_parsing_progress', (data) => {
+      this.emitToListeners('script_parsing_progress', data);
+    });
+
+    // Image generation events
+    this.socket.on('image_generation_progress', (data) => {
+      this.emitToListeners('image_generation_progress', data);
+    });
+
+    // Audio generation events
+    this.socket.on('audio_generation_progress', (data) => {
+      this.emitToListeners('audio_generation_progress', data);
     });
   }
 

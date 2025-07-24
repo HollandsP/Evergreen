@@ -6,6 +6,7 @@ import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 export default function ImageGenerationPage() {
   const router = useRouter();
+  const { projectId } = router.query;
   const [hasRequiredData, setHasRequiredData] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -22,7 +23,11 @@ export default function ImageGenerationPage() {
   }, []);
 
   const handleComplete = () => {
-    router.push('/production/videos');
+    if (projectId) {
+      router.push(`/production/videos?projectId=${projectId}`);
+    } else {
+      router.push('/production/videos');
+    }
   };
 
   if (isLoading) {
@@ -53,7 +58,10 @@ export default function ImageGenerationPage() {
         </div>
 
         {hasRequiredData ? (
-          <ImageGenerator onComplete={handleComplete} />
+          <ImageGenerator 
+            onComplete={handleComplete} 
+            projectId={projectId as string}
+          />
         ) : (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
             <div className="flex">

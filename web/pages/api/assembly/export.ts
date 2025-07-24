@@ -39,6 +39,7 @@ interface ExportData {
     narrationVolume: number;
   };
   totalDuration: number;
+  projectId?: string;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

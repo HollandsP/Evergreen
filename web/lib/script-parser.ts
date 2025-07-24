@@ -48,8 +48,15 @@ export class ScriptParser {
       // Skip empty lines
       if (!line) continue;
       
-      // Match scene timestamp and header
-      const sceneMatch = line.match(/^\[(\d+:\d+)\s*[–-]\s*([^|]+)\s*\|\s*(.+)\]$/);
+      // Enhanced scene detection patterns
+      // Match scene timestamp and header: [timestamp - Scene Type | Description]
+      const sceneMatch = line.match(/^\[(\d+:\d+)\s*[–-]\s*([^|]+)\s*\|\s*(.+)\]$/) ||
+                        // Match standard screenplay format: INT./EXT. LOCATION - TIME
+                        line.match(/^(INT\.|EXT\.)\s+(.+?)\s*-\s*(.+)$/i) ||
+                        // Match simple scene markers: Scene 1, SCENE 1, etc.
+                        line.match(/^SCENE\s+(\d+)[:\.]?\s*(.*)$/i) ||
+                        // Match chapter/part markers
+                        line.match(/^(CHAPTER|PART)\s+(\d+)[:\.]?\s*(.*)$/i);
       
       if (sceneMatch) {
         // Save previous scene if exists
@@ -57,10 +64,31 @@ export class ScriptParser {
           scenes.push(this.finalizeScene(currentScene, sceneIndex++));
         }
         
-        // Start new scene
-        const [, timestamp, sceneType, description] = sceneMatch;
+        // Start new scene with enhanced format detection
+        let timestamp, sceneType, description;
+        
+        if (sceneMatch[0].startsWith('[')) {
+          // Original LOG format: [timestamp - Scene Type | Description]
+          [, timestamp, sceneType, description] = sceneMatch;
+        } else if (sceneMatch[1] && (sceneMatch[1].startsWith('INT.') || sceneMatch[1].startsWith('EXT.'))) {
+          // Screenplay format: INT./EXT. LOCATION - TIME
+          timestamp = this.estimateTimestamp(sceneIndex);
+          sceneType = sceneMatch[1];
+          description = `${sceneMatch[2]} - ${sceneMatch[3]}`;
+        } else if (sceneMatch[0].toLowerCase().startsWith('scene')) {
+          // Simple scene format: Scene 1
+          timestamp = this.estimateTimestamp(sceneIndex);
+          sceneType = 'Scene';
+          description = sceneMatch[2] || `Scene ${sceneMatch[1]}`;
+        } else {
+          // Chapter/Part format
+          timestamp = this.estimateTimestamp(sceneIndex);
+          sceneType = sceneMatch[1];
+          description = sceneMatch[3] || `${sceneMatch[1]} ${sceneMatch[2]}`;
+        }
+        
         currentScene = {
-          timestamp: this.parseTimestamp(timestamp),
+          timestamp: typeof timestamp === 'string' ? this.parseTimestamp(timestamp) : timestamp,
           sceneType: sceneType.trim(),
           description: description.trim(),
           visual: '',
@@ -120,6 +148,19 @@ export class ScriptParser {
     return {
       time: timestamp,
       seconds: minutes * 60 + seconds,
+    };
+  }
+  
+  private estimateTimestamp(sceneIndex: number): ScriptTimestamp {
+    // Estimate timestamp based on scene index (assume ~30 seconds per scene)
+    const estimatedSeconds = sceneIndex * 30;
+    const minutes = Math.floor(estimatedSeconds / 60);
+    const seconds = estimatedSeconds % 60;
+    const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    return {
+      time: timeString,
+      seconds: estimatedSeconds,
     };
   }
   

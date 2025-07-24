@@ -1,11 +1,48 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { CloudArrowUpIcon, PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { CloudArrowUpIcon, PencilIcon, CheckIcon, XMarkIcon, FolderIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import { scriptParser, ParsedScript, ScriptScene } from '@/lib/script-parser';
 import { cn } from '@/lib/utils';
+import { SceneTree } from '@/components/script/SceneTree';
+import { SceneDivider } from '@/components/script/SceneDivider';
 
 interface ScriptProcessorProps {
   onComplete: (scriptData: any) => void;
 }
+
+// Helper functions for folder structure
+const createProjectFolders = async (projectId: string, scenes: ScriptScene[]) => {
+  // In a real implementation, this would make API calls to create server-side folders
+  // For now, we'll simulate folder creation
+  const folders = scenes.map((scene, index) => ({
+    name: `scene_${String(index + 1).padStart(2, '0')}`,
+    path: `/output/projects/${projectId}/scene_${String(index + 1).padStart(2, '0')}/`,
+    sceneId: scene.id
+  }));
+  
+  // Store folder structure in localStorage for now
+  localStorage.setItem(`projectFolders_${projectId}`, JSON.stringify(folders));
+  return folders;
+};
+
+const generateFolderStructure = (projectId: string, scenes: ScriptScene[]) => {
+  return scenes.map((scene, index) => ({
+    sceneNumber: index + 1,
+    sceneId: scene.id,
+    folderName: `scene_${String(index + 1).padStart(2, '0')}`,
+    folderPath: `/output/projects/${projectId}/scene_${String(index + 1).padStart(2, '0')}/`,
+    assets: {
+      images: [],
+      audio: [],
+      video: [],
+      metadata: {
+        title: scene.sceneType || `Scene ${index + 1}`,
+        description: scene.description || '',
+        duration: 0,
+        wordCount: scene.narration?.split(' ').length || 0
+      }
+    }
+  }));
+};
 
 export const ScriptProcessor: React.FC<ScriptProcessorProps> = ({ onComplete }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -17,8 +54,11 @@ export const ScriptProcessor: React.FC<ScriptProcessorProps> = ({ onComplete }) 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = useCallback(async (file: File) => {
-    if (!file || !file.name.endsWith('.txt')) {
-      setError('Please upload a .txt file');
+    const supportedFormats = ['.txt', '.md', '.pdf'];
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    
+    if (!supportedFormats.includes(fileExtension)) {
+      setError('Please upload a .txt, .md, or .pdf file');
       return;
     }
 
@@ -26,26 +66,73 @@ export const ScriptProcessor: React.FC<ScriptProcessorProps> = ({ onComplete }) 
     setError(null);
 
     try {
-      const content = await file.text();
-      const parsed = scriptParser.parseScript(content);
+      let content: string;
       
-      if (parsed.scenes.length === 0) {
+      if (fileExtension === '.pdf') {
+        // For PDF files, we'll need to extract text (simplified approach)
+        setError('PDF support coming soon. Please convert to .txt or .md format.');
+        return;
+      } else {
+        content = await file.text();
+      }
+      
+      // Call the API to parse the script
+      const response = await fetch('/api/script/parse', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content,
+          fileName: file.name,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to parse script');
+      }
+
+      const result = await response.json();
+      
+      if (!result.success || !result.scenes || result.scenes.length === 0) {
         throw new Error('No scenes found in the script');
       }
 
+      // Create a parsed script object from the API response
+      const parsed = {
+        title: result.metadata?.title || 'The Descent',
+        logNumber: '001',
+        scenes: result.scenes,
+        totalDuration: result.totalDuration,
+        characterCount: result.characterCount
+      };
+
       setParsedScript(parsed);
       
-      // Save to localStorage
-      const productionData = scriptParser.exportForProduction(parsed);
+      // Save to localStorage with enhanced metadata
+      const productionData = {
+        ...parsed,
+        projectId: result.projectId,
+        uploadedFile: file.name,
+        uploadedAt: new Date().toISOString(),
+        scenes: result.scenes,
+      };
       localStorage.setItem('scriptData', JSON.stringify(productionData));
       
       // Update production state
       const currentState = JSON.parse(localStorage.getItem('productionState') || '{}');
-      const newState = { ...currentState, scriptUploaded: true };
+      const newState = { 
+        ...currentState, 
+        scriptUploaded: true,
+        projectId: result.projectId,
+        projectName: parsed.title || 'Untitled Project',
+        currentStage: 'script'
+      };
       localStorage.setItem('productionState', JSON.stringify(newState));
       
-      // Notify parent
-      onComplete(productionData);
+      // Notify parent with the project ID
+      onComplete({ ...productionData, projectId: result.projectId });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to parse script');
     } finally {
@@ -135,7 +222,7 @@ export const ScriptProcessor: React.FC<ScriptProcessorProps> = ({ onComplete }) 
             <input
               ref={fileInputRef}
               type="file"
-              accept=".txt"
+              accept=".txt,.md,.pdf"
               onChange={handleFileSelect}
               className="hidden"
             />
@@ -152,7 +239,7 @@ export const ScriptProcessor: React.FC<ScriptProcessorProps> = ({ onComplete }) 
               Drag and drop your script file here, or click to browse
             </p>
             <p className="mt-1 text-xs text-gray-500">
-              Supports .txt files in LOG format
+              Supports .txt, .md, and .pdf files in LOG format
             </p>
             
             <button
@@ -216,8 +303,21 @@ Visual: Futuristic office, name badges...`}
             </div>
           </div>
 
-          {/* Scenes Preview */}
-          <div className="space-y-4">
+          {/* Script Tree Visualization */}
+          <div className="space-y-6">
+            <SceneTree parsedScript={parsedScript} />
+            
+            {/* Scene Division Editor */}
+            <SceneDivider 
+              parsedScript={parsedScript} 
+              onScenesUpdated={(updatedScript) => {
+                setParsedScript(updatedScript);
+                // Update localStorage
+                const productionData = scriptParser.exportForProduction(updatedScript);
+                localStorage.setItem('scriptData', JSON.stringify(productionData));
+              }}
+            />
+            
             <h3 className="text-lg font-semibold text-gray-900">Scene Breakdown</h3>
             
             {parsedScript.scenes.map((scene, index) => (

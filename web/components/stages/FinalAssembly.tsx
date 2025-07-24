@@ -15,6 +15,7 @@ interface VideoData {
 
 interface FinalAssemblyProps {
   onComplete?: () => void;
+  projectId?: string;
 }
 
 interface ExportOptions {
@@ -41,7 +42,7 @@ interface TimelineItem {
   video?: VideoData;
 }
 
-export default function FinalAssembly({ onComplete }: FinalAssemblyProps) {
+export default function FinalAssembly({ onComplete, projectId }: FinalAssemblyProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
@@ -182,6 +183,7 @@ export default function FinalAssembly({ onComplete }: FinalAssemblyProps) {
         })),
         settings: exportOptions,
         totalDuration: calculateTotalDuration(),
+        projectId: projectId || JSON.parse(localStorage.getItem('productionState') || '{}').projectId || 'default',
       };
 
       // Create FormData for file upload

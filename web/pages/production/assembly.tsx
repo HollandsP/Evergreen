@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/router';
 import ProductionLayout from '../../components/layout/ProductionLayout';
 import FinalAssembly from '../../components/stages/FinalAssembly';
 import ChatInterface from '../../components/editor/ChatInterface';
 import EditingTimeline from '../../components/editor/EditingTimeline';
 export default function AssemblyPage() {
+  const router = useRouter();
+  const { projectId } = router.query;
   const [storyboardData] = useState(null);
 
   const handleComplete = () => {
@@ -32,7 +35,7 @@ export default function AssemblyPage() {
       <div className="h-full flex flex-col gap-4 p-4">
         {/* Top section: Final Assembly component */}
         <div className="flex-shrink-0">
-          <FinalAssembly onComplete={handleComplete} />
+          <FinalAssembly onComplete={handleComplete} projectId={projectId as string} />
         </div>
 
         {/* Main editing interface */}
@@ -40,7 +43,7 @@ export default function AssemblyPage() {
           {/* Timeline - spans 2 columns on large screens */}
           <div className="lg:col-span-2">
             <EditingTimeline
-              projectId="current_project"
+              projectId={projectId as string || "current_project"}
               storyboardData={storyboardData}
               onClipSelected={handleClipSelected}
               onTimelineChange={handleTimelineChange}
@@ -51,7 +54,7 @@ export default function AssemblyPage() {
           {/* Chat Interface - 1 column */}
           <div className="lg:col-span-1">
             <ChatInterface
-              projectId="current_project"
+              projectId={projectId as string || "current_project"}
               storyboardData={storyboardData}
               onCommandExecuted={handleCommandExecuted}
               className="h-full"

@@ -45,6 +45,7 @@ interface ImageData {
 
 interface ImageGeneratorProps {
   onComplete: () => void;
+  projectId?: string;
 }
 
 // Using DALL-E 3 as the primary image generation provider
@@ -55,7 +56,7 @@ const DALLE3_INFO = {
   cost: '$0.040 per image (1024x1024) / $0.080 per image (1024x1792)',
 };
 
-export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onComplete }) => {
+export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onComplete, projectId }) => {
   const [scenes, setScenes] = useState<SceneData[]>([]);
   const [audioData, setAudioData] = useState<Record<string, AudioData>>({});
   const [imageData, setImageData] = useState<Record<string, ImageData>>({});
@@ -120,6 +121,7 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onComplete }) =>
           provider: 'dalle3',
           sceneId,
           size: '1792x1024', // 16:9 aspect ratio for DALL-E 3
+          projectId: projectId || JSON.parse(localStorage.getItem('productionState') || '{}').projectId || 'default',
         }),
       });
 

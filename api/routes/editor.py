@@ -244,28 +244,21 @@ async def get_operation_status(
 
 @router.get("/health")
 async def editor_health_check():
-    """Health check endpoint for the video editor service."""
+    """Comprehensive health check endpoint for the video editor service."""
     try:
         editor = get_ai_editor()
         
-        # Basic health checks
-        health_status = {
-            "status": "healthy",
-            "timestamp": datetime.utcnow().isoformat(),
-            "services": {
-                "ai_editor": "available",
-                "moviepy": "available" if hasattr(editor, 'moviepy') else "unavailable",
-                "ffmpeg": "available" if hasattr(editor, 'ffmpeg') else "unavailable",
-                "openai": "available" if editor.openai_client else "unavailable"
-            }
-        }
+        # Get comprehensive health status
+        health_status = await editor.get_health_status()
+        health_status["timestamp"] = datetime.utcnow().isoformat()
         
         return health_status
         
     except Exception as e:
         logger.error("Editor health check failed", error=str(e))
         return {
-            "status": "unhealthy",
+            "overall_health": "error",
             "timestamp": datetime.utcnow().isoformat(),
-            "error": str(e)
+            "error": str(e),
+            "can_edit_videos": False
         }

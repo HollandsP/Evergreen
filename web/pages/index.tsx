@@ -13,6 +13,7 @@ import ImageGeneratorPanel from '@/components/ImageGeneratorPanel';
 import WorkflowVisualizer from '@/components/WorkflowVisualizer';
 import MediaPreview from '@/components/MediaPreview';
 import PipelineControls from '@/components/PipelineControls';
+import ConnectionStatus from '@/components/shared/ConnectionStatus';
 
 // Types and utilities
 import { 
@@ -137,6 +138,12 @@ export default function Home() {
       wsManager.subscribe('job_failed', handleJobFailed);
       wsManager.subscribe('system_status', handleSystemStatusUpdate);
       
+      // Progress event listeners for each stage
+      wsManager.subscribe('script_parsing_progress', handleScriptParsingProgress);
+      wsManager.subscribe('image_generation_progress', handleImageGenerationProgress);
+      wsManager.subscribe('audio_generation_progress', handleAudioGenerationProgress);
+      wsManager.subscribe('video_generation_progress', handleVideoGenerationProgress);
+      
       // Add connection status listeners
       wsManager.subscribe('connected', () => {
         console.log('WebSocket connected successfully');
@@ -237,6 +244,111 @@ export default function Home() {
     setSystemStatus(data);
   }, []);
 
+  const handleScriptParsingProgress = useCallback((data: any) => {
+    console.log('Script parsing progress:', data);
+    
+    // Update the current job with progress
+    if (currentJob && currentJob.id === data.jobId) {
+      setCurrentJob(prev => prev ? {
+        ...prev,
+        progress: data.progress,
+        status: 'generating_image' as const,
+        updatedAt: new Date(),
+      } : null);
+    }
+    
+    // Update step progress
+    setPipelineSteps(prev => prev.map(step => 
+      step.id === 'script_parsing' ? {
+        ...step,
+        progress: data.progress,
+        status: data.status === 'completed' ? 'completed' : 'running',
+        metadata: {
+          currentScene: data.currentScene,
+          totalScenes: data.totalScenes,
+          message: data.message,
+        }
+      } : step
+    ));
+  }, [currentJob]);
+
+  const handleImageGenerationProgress = useCallback((data: any) => {
+    console.log('Image generation progress:', data);
+    
+    // Update the current job with progress
+    if (currentJob && currentJob.id === data.jobId) {
+      setCurrentJob(prev => prev ? {
+        ...prev,
+        progress: data.progress,
+        status: 'generating_image',
+        imageUrl: data.imageUrl || prev.imageUrl,
+        updatedAt: new Date(),
+      } : null);
+    }
+    
+    // Update step progress
+    setPipelineSteps(prev => prev.map(step => 
+      step.id === 'image_generation' ? {
+        ...step,
+        progress: data.progress,
+        status: data.status === 'completed' ? 'completed' : 'running',
+        metadata: {
+          sceneId: data.sceneId,
+          imageUrl: data.imageUrl,
+          message: data.message,
+        }
+      } : step
+    ));
+  }, [currentJob]);
+
+  const handleAudioGenerationProgress = useCallback((data: any) => {
+    console.log('Audio generation progress:', data);
+    
+    // Update step progress
+    setPipelineSteps(prev => prev.map(step => 
+      step.id === 'audio_generation' ? {
+        ...step,
+        progress: data.progress,
+        status: data.status === 'completed' ? 'completed' : 'running',
+        metadata: {
+          audioUrl: data.audioUrl,
+          duration: data.duration,
+          voiceId: data.voiceId,
+          message: data.message,
+        }
+      } : step
+    ));
+  }, []);
+
+  const handleVideoGenerationProgress = useCallback((data: any) => {
+    console.log('Video generation progress:', data);
+    
+    // Update the current job with progress
+    if (currentJob && currentJob.id === data.jobId) {
+      setCurrentJob(prev => prev ? {
+        ...prev,
+        progress: data.progress,
+        status: 'generating_video',
+        videoUrl: data.videoUrl || prev.videoUrl,
+        updatedAt: new Date(),
+      } : null);
+    }
+    
+    // Update step progress
+    setPipelineSteps(prev => prev.map(step => 
+      step.id === 'video_generation' ? {
+        ...step,
+        progress: data.progress,
+        status: data.status === 'completed' ? 'completed' : 'running',
+        metadata: {
+          eta: data.eta,
+          videoUrl: data.videoUrl,
+          message: data.message,
+        }
+      } : step
+    ));
+  }, [currentJob]);
+
   const handleGenerate = async (request: GenerationRequest) => {
     try {
       setIsGenerating(true);
@@ -252,8 +364,20 @@ export default function Home() {
       // Initialize pipeline steps
       const initialSteps: PipelineStep[] = [
         {
+          id: 'script_parsing',
+          name: 'Script Parsing',
+          status: 'pending',
+          progress: 0,
+        },
+        {
           id: 'image_generation',
           name: 'Image Generation',
+          status: 'pending',
+          progress: 0,
+        },
+        {
+          id: 'audio_generation',
+          name: 'Audio Generation',
           status: 'pending',
           progress: 0,
         },
@@ -350,6 +474,7 @@ export default function Home() {
               </div>
               
               <div className="flex items-center space-x-4">
+                <ConnectionStatus className="mr-4" />
                 <div className="hidden sm:flex items-center space-x-6 text-sm text-zinc-400">
                   <div className="flex items-center space-x-1">
                     <CpuChipIcon className="h-4 w-4" />

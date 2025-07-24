@@ -2,6 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ScriptScene } from '@/types';
 import { updateProductionStage } from '@/lib/production-state';
 import { v4 as uuidv4 } from 'uuid';
+import { getSocketServer, emitProgress } from '@/lib/websocket-server';
+import { fileManager, ProjectMetadata, SceneMetadata } from '@/lib/file-manager';
 
 interface ParsedScript {
   scenes: ScriptScene[];
@@ -14,7 +16,7 @@ interface ParsedScript {
   };
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse & { socket?: any }) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -36,12 +38,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { content, fileName } = req.body;
+    const { content, fileName, jobId, projectId } = req.body;
 
     if (!content) {
       res.status(400).json({ error: 'No content provided' });
       return;
     }
+
+    const io = getSocketServer(res as any);
+    const currentJobId = jobId || uuidv4();
+    const currentProjectId = projectId || uuidv4();
 
     // Update state to parsing
     updateProductionStage('script', {
@@ -50,18 +56,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       fileName,
     });
 
-    // Send WebSocket notification
-    if (global.io) {
-      global.io.emit('script:parseStart', {
+    // Emit script parsing started event
+    emitProgress(io, {
+      jobId: currentJobId,
+      stage: 'script_parsing',
+      progress: 0,
+      status: 'started',
+      data: {
+        message: 'Starting script parsing...',
         fileName,
-        timestamp: new Date().toISOString(),
-      });
-    }
+      },
+    });
 
     // Parse the script content
     const parsedScript = await parseScriptContent(content);
 
-    // Update progress periodically during parsing
+    // Emit progress update
+    emitProgress(io, {
+      jobId: currentJobId,
+      stage: 'script_parsing',
+      progress: 50,
+      status: 'progress',
+      data: {
+        message: 'Script parsed, analyzing scenes...',
+        currentScene: 0,
+        totalScenes: parsedScript.scenes.length,
+      },
+    });
+
     updateProductionStage('script', {
       parseProgress: 50,
     });
@@ -69,28 +91,92 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Generate image prompts for each scene
     const scenesWithPrompts = await generateImagePrompts(parsedScript.scenes);
 
+    emitProgress(io, {
+      jobId: currentJobId,
+      stage: 'script_parsing',
+      progress: 90,
+      status: 'progress',
+      data: {
+        message: 'Image prompts generated',
+        currentScene: parsedScript.scenes.length,
+        totalScenes: parsedScript.scenes.length,
+      },
+    });
+
     updateProductionStage('script', {
       parseProgress: 90,
     });
+
+    // Create project structure and save metadata
+    try {
+      await fileManager.createProjectStructure(currentProjectId, scenesWithPrompts.length);
+      
+      // Create project metadata
+      const projectMetadata: ProjectMetadata = {
+        id: currentProjectId,
+        title: parsedScript.metadata.title || fileName || 'Untitled Project',
+        description: `Script with ${scenesWithPrompts.length} scenes`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: 'draft',
+        scenes: scenesWithPrompts.map((scene, index) => ({
+          id: `scene_${(index + 1).toString().padStart(3, '0')}`,
+          sceneNumber: index + 1,
+          title: `Scene ${index + 1}`,
+          description: scene.metadata?.description,
+          text: scene.narration,
+          speaker: scene.metadata?.speaker,
+          duration: estimateDuration(scene.narration),
+          assets: {
+            images: [],
+            audio: [],
+            videos: []
+          },
+          prompts: {
+            image: scene.imagePrompt,
+            audio: scene.narration,
+            video: scene.imagePrompt
+          },
+          status: 'pending'
+        } as SceneMetadata)),
+        settings: {
+          targetPlatform: 'youtube',
+          videoFormat: 'mp4',
+          audioFormat: 'mp3'
+        }
+      };
+      
+      await fileManager.saveProjectMetadata(currentProjectId, projectMetadata);
+    } catch (error) {
+      console.error('Failed to create project structure:', error);
+      // Don't fail the entire operation if file creation fails
+    }
 
     // Update state with parsed scenes
     updateProductionStage('script', {
       status: 'completed',
       scenes: scenesWithPrompts,
       parseProgress: 100,
+      projectId: currentProjectId,
     });
 
-    // Send WebSocket notification
-    if (global.io) {
-      global.io.emit('script:parseComplete', {
-        sceneCount: scenesWithPrompts.length,
-        totalDuration: parsedScript.totalDuration,
-        timestamp: new Date().toISOString(),
-      });
-    }
+    // Emit completion event
+    emitProgress(io, {
+      jobId: currentJobId,
+      stage: 'script_parsing',
+      progress: 100,
+      status: 'completed',
+      data: {
+        message: 'Script parsing completed',
+        currentScene: parsedScript.scenes.length,
+        totalScenes: parsedScript.scenes.length,
+        projectId: currentProjectId,
+      },
+    });
 
     res.status(200).json({
       success: true,
+      projectId: currentProjectId,
       scenes: scenesWithPrompts,
       totalDuration: parsedScript.totalDuration,
       characterCount: parsedScript.characterCount,

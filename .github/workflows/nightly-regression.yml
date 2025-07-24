@@ -1,0 +1,237 @@
+name: Nightly Regression Tests
+
+on:
+  schedule:
+    # Run at 2 AM UTC every night
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_scope:
+        description: 'Test scope to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - performance
+          - visual
+          - stress
+          - integration
+
+jobs:
+  # ===== Comprehensive Regression Tests =====
+  regression-tests:
+    name: Nightly Regression Test Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    
+    strategy:
+      matrix:
+        test-suite: ['performance', 'visual', 'stress', 'integration', 'command-parsing']
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/pip
+          ~/.cache/pre-commit
+        key: ${{ runner.os }}-regression-${{ hashFiles('**/requirements*.txt') }}
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg libopencv-dev python3-opencv
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        pip install opencv-python scikit-image pillow imagehash matplotlib pandas
+    
+    - name: Set up test environment
+      run: |
+        mkdir -p benchmark_results
+        mkdir -p visual_baselines
+        mkdir -p test_reports
+    
+    # ===== Performance Regression Tests =====
+    - name: Run performance regression tests
+      if: matrix.test-suite == 'performance' && (github.event.inputs.test_scope == 'all' || github.event.inputs.test_scope == 'performance')
+      run: |
+        echo "Running comprehensive performance benchmarks..."
+        pytest tests/performance/benchmark_suite.py -v -s --tb=short \
+          --html=test_reports/performance_report.html \
+          --self-contained-html
+    
+    - name: Analyze performance trends
+      if: matrix.test-suite == 'performance'
+      run: |
+        python -c "
+        import json
+        import matplotlib.pyplot as plt
+        from datetime import datetime
+        
+        # Load current results
+        try:
+            with open('./benchmark_results/performance_report.json', 'r') as f:
+                current = json.load(f)
+            
+            # Create trend visualization
+            operations = current.get('operations', {})
+            if operations:
+                fig, ax = plt.subplots(figsize=(12, 6))
+                
+                op_names = list(operations.keys())
+                durations = [op['duration']['mean'] for op in operations.values()]
+                
+                bars = ax.bar(op_names, durations)
+                ax.set_ylabel('Duration (seconds)')
+                ax.set_title(f'Performance Benchmark Results - {datetime.now().strftime(\"%Y-%m-%d\")}')
+                plt.xticks(rotation=45, ha='right')
+                
+                # Color bars based on regression status
+                for i, (op_name, op_data) in enumerate(operations.items()):
+                    if op_data.get('regression_status') == 'FAIL':
+                        bars[i].set_color('red')
+                    else:
+                        bars[i].set_color('green')
+                
+                plt.tight_layout()
+                plt.savefig('./benchmark_results/performance_trend.png')
+                print('Performance trend visualization saved')
+        except Exception as e:
+            print(f'Error analyzing performance trends: {e}')
+        "
+    
+    # ===== Visual Quality Regression Tests =====
+    - name: Run visual regression tests
+      if: matrix.test-suite == 'visual' && (github.event.inputs.test_scope == 'all' || github.event.inputs.test_scope == 'visual')
+      run: |
+        echo "Running visual quality regression tests..."
+        pytest tests/visual/video_output_regression.py -v -s --tb=short \
+          --html=test_reports/visual_report.html \
+          --self-contained-html
+    
+    # ===== Stress Tests =====
+    - name: Run extended stress tests
+      if: matrix.test-suite == 'stress' && (github.event.inputs.test_scope == 'all' || github.event.inputs.test_scope == 'stress')
+      run: |
+        echo "Running extended stress tests..."
+        pytest tests/stress/concurrent_operations.py -v -s --tb=short \
+          --html=test_reports/stress_report.html \
+          --self-contained-html
+    
+    # ===== Integration Tests =====
+    - name: Run comprehensive integration tests
+      if: matrix.test-suite == 'integration' && (github.event.inputs.test_scope == 'all' || github.event.inputs.test_scope == 'integration')
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+        RUNWAY_API_KEY: ${{ secrets.RUNWAY_API_KEY }}
+      run: |
+        echo "Running comprehensive integration tests..."
+        pytest tests/integration/ -v --tb=short \
+          --html=test_reports/integration_report.html \
+          --self-contained-html
+    
+    # ===== Command Parsing Accuracy Tests =====
+    - name: Run GPT-4 command parsing accuracy tests
+      if: matrix.test-suite == 'command-parsing'
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        echo "Running GPT-4 command parsing accuracy tests..."
+        pytest tests/integration/test_command_parsing.py::TestGPT4CommandParsing -v -s \
+          --html=test_reports/command_parsing_report.html \
+          --self-contained-html
+    
+    # ===== Upload Results =====
+    - name: Upload test reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: nightly-test-reports-${{ matrix.test-suite }}
+        path: |
+          test_reports/*.html
+          benchmark_results/*.png
+          benchmark_results/*.json
+          visual_baselines/
+        retention-days: 30
+    
+    - name: Upload performance baselines
+      if: matrix.test-suite == 'performance' && success()
+      uses: actions/cache@v3
+      with:
+        path: ./benchmark_results/baselines.json
+        key: performance-baselines-${{ github.sha }}
+
+  # ===== Generate Comprehensive Report =====
+  generate-report:
+    name: Generate Nightly Report
+    runs-on: ubuntu-latest
+    needs: [regression-tests]
+    if: always()
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Download all test reports
+      uses: actions/download-artifact@v3
+      with:
+        path: all-reports
+    
+    - name: Generate summary report
+      run: |
+        echo "# Nightly Regression Test Report" > nightly_report.md
+        echo "Date: $(date)" >> nightly_report.md
+        echo "" >> nightly_report.md
+        
+        # Add test results summary
+        echo "## Test Results Summary" >> nightly_report.md
+        echo "" >> nightly_report.md
+        
+        # Check each test suite
+        for suite in performance visual stress integration command-parsing; do
+          if [ -d "all-reports/nightly-test-reports-${suite}" ]; then
+            echo "- **${suite}**: ✅ Completed" >> nightly_report.md
+          else
+            echo "- **${suite}**: ❌ Failed or skipped" >> nightly_report.md
+          fi
+        done
+        
+        echo "" >> nightly_report.md
+        echo "## Detailed Reports" >> nightly_report.md
+        echo "See artifacts for detailed HTML reports and visualizations." >> nightly_report.md
+    
+    - name: Upload summary report
+      uses: actions/upload-artifact@v3
+      with:
+        name: nightly-summary-report
+        path: nightly_report.md
+        retention-days: 90
+    
+    - name: Send notification
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          // Create an issue for failed nightly tests
+          const title = `Nightly Regression Tests Failed - ${new Date().toISOString().split('T')[0]}`;
+          const body = `The nightly regression tests have failed. Please check the [workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for details.`;
+          
+          await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: title,
+            body: body,
+            labels: ['bug', 'regression', 'nightly-test']
+          });

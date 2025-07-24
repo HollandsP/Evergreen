@@ -26,6 +26,7 @@ interface AudioData {
 
 interface AudioGeneratorProps {
   onComplete: () => void;
+  projectId?: string;
 }
 
 const VOICE_OPTIONS = [
@@ -34,7 +35,7 @@ const VOICE_OPTIONS = [
   { id: 'male_british', name: 'Winston - British', description: 'Alternative accent' },
 ];
 
-export const AudioGenerator: React.FC<AudioGeneratorProps> = ({ onComplete }) => {
+export const AudioGenerator: React.FC<AudioGeneratorProps> = ({ onComplete, projectId }) => {
   const [scenes, setScenes] = useState<SceneData[]>([]);
   const [audioData, setAudioData] = useState<Record<string, AudioData>>({});
   const [selectedVoice, setSelectedVoice] = useState('male_calm');
@@ -90,6 +91,7 @@ export const AudioGenerator: React.FC<AudioGeneratorProps> = ({ onComplete }) =>
           text: narration,
           voice: selectedVoice,
           sceneId,
+          projectId: projectId || JSON.parse(localStorage.getItem('productionState') || '{}').projectId || 'default',
         }),
         signal: controller.signal,
       });

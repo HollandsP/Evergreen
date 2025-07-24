@@ -57,9 +57,19 @@ export default async function handler(
     });
 
     if (!response.ok) {
-      // If Python service is not available, provide mock responses for development
-      const mockResponse = await generateMockResponse(command, projectId);
-      return res.status(200).json(mockResponse);
+      const errorText = await response.text();
+      console.error('Python service error:', response.status, errorText);
+      
+      return res.status(response.status).json({
+        success: false,
+        message: `AI Video Editor service error: ${response.statusText}`,
+        error: `Backend service returned ${response.status}: ${errorText}`,
+        suggestions: [
+          'Check if the Python backend is running on port 8000',
+          'Verify that MoviePy and OpenAI API key are properly configured',
+          'Try a simpler command like "Cut the first 2 seconds"'
+        ]
+      });
     }
 
     const result = await response.json();
@@ -78,218 +88,20 @@ export default async function handler(
   } catch (error) {
     console.error('Error processing editor command:', error);
     
-    // Fallback to mock response for development
-    try {
-      const mockResponse = await generateMockResponse(
-        req.body.command, 
-        req.body.projectId
-      );
-      return res.status(200).json(mockResponse);
-    } catch (mockError) {
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error processing command',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to connect to AI Video Editor service',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      suggestions: [
+        'Ensure the Python backend is running: python -m uvicorn api.main:app --reload',
+        'Check that OPENAI_API_KEY is configured in .env',
+        'Verify MoviePy is installed: pip install moviepy',
+        'Try restarting the backend service'
+      ]
+    });
   }
 }
 
-async function generateMockResponse(
-  command: string, 
-  _projectId: string
-): Promise<ProcessCommandResponse> {
-  // Simple command parsing for development/demo purposes
-  const lowerCommand = command.toLowerCase();
-  
-  if (lowerCommand.includes('cut') || lowerCommand.includes('trim')) {
-    const operation = {
-      operation: 'CUT',
-      parameters: {
-        target: extractSceneFromCommand(command),
-        start_time: 0,
-        duration: extractDurationFromCommand(command) || 3
-      },
-      confidence: 0.9,
-      explanation: `Will remove the specified duration from ${extractSceneFromCommand(command)}`
-    };
-
-    return {
-      success: true,
-      message: `Successfully applied cut operation to ${operation.parameters.target}`,
-      operation,
-      operation_id: generateMockOperationId(),
-      preview_url: `/api/editor/preview/${generateMockOperationId()}`,
-      output_path: `/output/editor/${generateMockOperationId()}_cut.mp4`
-    };
-  }
-  
-  if (lowerCommand.includes('fade')) {
-    const operation = {
-      operation: 'FADE',
-      parameters: {
-        target: lowerCommand.includes('all') ? 'all_scenes' : extractSceneFromCommand(command),
-        fade_type: lowerCommand.includes('out') ? 'out' : 'in',
-        duration: 1.0
-      },
-      confidence: 0.95,
-      explanation: `Will add fade ${lowerCommand.includes('out') ? 'out' : 'in'} effect`
-    };
-
-    return {
-      success: true,
-      message: `Successfully added fade transition`,
-      operation,
-      operation_id: generateMockOperationId(),
-      preview_url: `/api/editor/preview/${generateMockOperationId()}`,
-      output_path: `/output/editor/${generateMockOperationId()}_fade.mp4`
-    };
-  }
-  
-  if (lowerCommand.includes('speed')) {
-    const speedMatch = command.match(/(\d+\.?\d*)\s*x/);
-    const speed = speedMatch ? parseFloat(speedMatch[1]) : 1.5;
-    
-    const operation = {
-      operation: 'SPEED',
-      parameters: {
-        target: extractSceneFromCommand(command),
-        multiplier: speed
-      },
-      confidence: 0.9,
-      explanation: `Will change playback speed to ${speed}x`
-    };
-
-    return {
-      success: true,
-      message: `Successfully changed speed to ${speed}x for ${operation.parameters.target}`,
-      operation,
-      operation_id: generateMockOperationId(),
-      preview_url: `/api/editor/preview/${generateMockOperationId()}`,
-      output_path: `/output/editor/${generateMockOperationId()}_speed.mp4`
-    };
-  }
-  
-  if (lowerCommand.includes('text') || lowerCommand.includes('overlay')) {
-    const textMatch = command.match(/['"]([^'"]+)['"]/);
-    const text = textMatch ? textMatch[1] : 'Sample Text';
-    
-    const operation = {
-      operation: 'OVERLAY',
-      parameters: {
-        target: extractSceneFromCommand(command),
-        overlay_type: 'text',
-        content: text,
-        position: 'center'
-      },
-      confidence: 0.85,
-      explanation: `Will add text overlay "${text}" to the video`
-    };
-
-    return {
-      success: true,
-      message: `Successfully added text overlay "${text}"`,
-      operation,
-      operation_id: generateMockOperationId(),
-      preview_url: `/api/editor/preview/${generateMockOperationId()}`,
-      output_path: `/output/editor/${generateMockOperationId()}_overlay.mp4`
-    };
-  }
-  
-  if (lowerCommand.includes('audio') || lowerCommand.includes('volume')) {
-    const volumeMatch = command.match(/(\d+)%/);
-    const volume = volumeMatch ? parseInt(volumeMatch[1]) / 100 : 0.5;
-    
-    const operation = {
-      operation: 'AUDIO_MIX',
-      parameters: {
-        target: extractSceneFromCommand(command),
-        volume: volume
-      },
-      confidence: 0.9,
-      explanation: `Will adjust audio volume to ${Math.round(volume * 100)}%`
-    };
-
-    return {
-      success: true,
-      message: `Successfully adjusted audio volume to ${Math.round(volume * 100)}%`,
-      operation,
-      operation_id: generateMockOperationId(),
-      preview_url: `/api/editor/preview/${generateMockOperationId()}`,
-      output_path: `/output/editor/${generateMockOperationId()}_audio.mp4`
-    };
-  }
-  
-  if (lowerCommand.includes('transition')) {
-    const operation = {
-      operation: 'TRANSITION',
-      parameters: {
-        target: 'all_scenes',
-        transition_type: 'fade',
-        duration: 1.0
-      },
-      confidence: 0.9,
-      explanation: 'Will add fade transitions between all scene clips'
-    };
-
-    return {
-      success: true,
-      message: 'Successfully added transitions between all scenes',
-      operation,
-      operation_id: generateMockOperationId(),
-      preview_url: `/api/editor/preview/${generateMockOperationId()}`,
-      output_path: `/output/editor/${generateMockOperationId()}_transitions.mp4`
-    };
-  }
-
-  // Default response for unrecognized commands
-  return {
-    success: false,
-    message: 'I\'m not sure how to help with that command. Could you try rephrasing it?',
-    suggestions: [
-      'Cut the first 3 seconds of scene 1',
-      'Add fade transition between all scenes',
-      'Speed up scene 2 by 1.5x',
-      'Add text overlay "THE END" to the last scene',
-      'Reduce audio volume to 50% for scene 3'
-    ]
-  };
-}
-
-function extractSceneFromCommand(command: string): string {
-  const sceneMatch = command.match(/scene\s*(\d+)/i);
-  if (sceneMatch) {
-    return `scene_${sceneMatch[1]}`;
-  }
-  
-  // Look for other scene indicators
-  if (command.toLowerCase().includes('last scene') || command.toLowerCase().includes('final scene')) {
-    return 'scene_last';
-  }
-  
-  if (command.toLowerCase().includes('first scene')) {
-    return 'scene_1';
-  }
-  
-  return 'scene_1'; // Default
-}
-
-function extractDurationFromCommand(command: string): number | null {
-  // Look for patterns like "3 seconds", "5s", "2.5 sec"
-  const durationMatch = command.match(/(\d+\.?\d*)\s*(second|sec|s)\b/i);
-  if (durationMatch) {
-    return parseFloat(durationMatch[1]);
-  }
-  
-  // Look for "first X seconds"
-  const firstMatch = command.match(/first\s+(\d+\.?\d*)/i);
-  if (firstMatch) {
-    return parseFloat(firstMatch[1]);
-  }
-  
-  return null;
-}
-
-function generateMockOperationId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
-}
+// Mock functions removed - now connecting directly to FastAPI backend
+// The AI Video Editor service handles all command parsing with GPT-4
+// and video operations with MoviePy

@@ -7,12 +7,21 @@ import { InformationCircleIcon } from '@heroicons/react/24/outline';
 export default function ScriptProcessingPage() {
   const router = useRouter();
 
-  const handleScriptComplete = useCallback(() => {
+  const handleScriptComplete = useCallback((scriptData: any) => {
     // Script data is already saved to localStorage by ScriptProcessor
-    // Navigate to the audio generation stage
-    setTimeout(() => {
-      router.push('/production/audio');
-    }, 1000);
+    // Navigate to the audio generation stage with projectId
+    const projectId = scriptData.projectId;
+    if (projectId) {
+      // Store projectId in URL query for next stages
+      setTimeout(() => {
+        router.push(`/production/audio?projectId=${projectId}`);
+      }, 1000);
+    } else {
+      // Fallback to regular navigation
+      setTimeout(() => {
+        router.push('/production/audio');
+      }, 1000);
+    }
   }, [router]);
 
   return (

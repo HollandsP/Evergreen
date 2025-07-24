@@ -1,8 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getRunwayClient } from '../../../lib/runway-client';
 import wsManager from '../../../lib/websocket';
+import { fileManager } from '@/lib/file-manager';
 import { promises as fs } from 'fs';
 import path from 'path';
+import fetch from 'node-fetch';
 
 interface VideoGenerationRequest {
   imageUrl: string;
@@ -22,6 +24,7 @@ interface VideoGenerationResponse {
   status: 'completed' | 'processing' | 'failed';
   duration: number;
   error?: string;
+  savedPath?: string;
 }
 
 // Camera movement parameters based on dalle3_runway_prompts.py
@@ -40,44 +43,51 @@ const cameraMovementPrompts: Record<string, string> = {
   handheld: 'handheld camera movement, subtle shake, documentary style',
 };
 
-// Create scene folder structure
-async function createSceneFolders(projectId: string, sceneId: string): Promise<void> {
-  const basePath = path.join(process.cwd(), 'public', 'exports', projectId);
-  const scenePath = path.join(basePath, sceneId);
-  
-  // Create folders for scene assets
-  const folders = ['images', 'audio', 'videos', 'metadata', 'exports'];
-  
-  for (const folder of folders) {
-    const folderPath = path.join(scenePath, folder);
-    await fs.mkdir(folderPath, { recursive: true });
-  }
-  
-  // Create scene metadata file if it doesn't exist
-  const metadataPath = path.join(scenePath, 'metadata', 'scene.json');
+// Save video file and metadata using centralized file manager
+async function saveVideoFile(
+  projectId: string,
+  sceneId: string,
+  videoUrl: string,
+  metadata: any
+): Promise<string | undefined> {
   try {
-    await fs.access(metadataPath);
-    // File exists, don't overwrite
-  } catch {
-    // File doesn't exist, create it
-    const metadata = {
-      id: sceneId,
-      projectId: projectId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      status: 'initialized',
-      assets: {
-        images: [],
-        audio: [],
-        videos: []
-      },
-      generation: {
-        videoRequests: [],
-        completedVideos: []
-      }
-    };
+    // Download the video
+    const videoResponse = await fetch(videoUrl);
+    if (!videoResponse.ok) {
+      throw new Error('Failed to download generated video');
+    }
     
-    await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
+    const buffer = await videoResponse.buffer();
+    
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `runway_${timestamp}.mp4`;
+    
+    // Get the path to save the video
+    const videoPath = fileManager.getAssetFilePath(projectId, sceneId, 'videos', filename);
+    
+    // Ensure directory exists
+    await fs.mkdir(path.dirname(videoPath), { recursive: true });
+    
+    // Save the video
+    await fs.writeFile(videoPath, buffer);
+    
+    // Update scene metadata
+    await fileManager.addAssetToScene(projectId, sceneId, 'videos', filename);
+    
+    // Update scene metadata with video generation details
+    await fileManager.updateSceneMetadata(projectId, sceneId, {
+      status: 'completed',
+      prompts: {
+        video: metadata.prompt
+      }
+    });
+    
+    console.log(`Saved video to: ${videoPath}`);
+    return filename;
+  } catch (error) {
+    console.error('Failed to save video:', error);
+    return undefined;
   }
 }
 
@@ -166,7 +176,12 @@ export default async function handler(
       });
     }
 
-    // Validate duration (Runway Gen-4 supports 5 or 10 seconds)
+    // Check for API key
+    if (!process.env.RUNWAY_API_KEY) {
+      return res.status(500).json({ error: 'RunwayML API key not configured' });
+    }
+
+    // Validate duration (RunwayML supports 5 or 10 seconds)
     const validDuration = duration <= 5 ? 5 : 10;
 
     // Build the complete prompt
@@ -200,12 +215,13 @@ export default async function handler(
     const runwayClient = getRunwayClient();
 
     // Generate video using real RunwayML API
+    // Using Gen-3 Alpha Turbo (7x faster than standard)
     const task = await runwayClient.generateVideo({
       imageUrl,
       prompt: fullPrompt,
       duration: validDuration,
-      model: 'gen4_turbo',
-      ratio: '1280:720', // Default aspect ratio
+      model: 'gen3a_turbo', // Gen-3 Alpha Turbo - 7x faster
+      ratio: '1280:768', // Gen-3 Alpha Turbo supported aspect ratio
     });
 
     if (task.status === 'FAILED' || !task.id) {
@@ -217,11 +233,14 @@ export default async function handler(
 
     const jobId = task.id;
     console.log('RunwayML task created:', jobId);
+    
+    // Log cost estimation
+    // Gen-3 Alpha Turbo: 625 credits = 78s video
+    // Estimated cost per second: 625/78 = ~8 credits/second
+    const estimatedCredits = validDuration * 8;
+    console.log(`Estimated RunwayML cost: ${estimatedCredits} credits for ${validDuration}s video`);
 
-    // Create scene folders if project info provided
-    if (projectId && sceneId) {
-      await createSceneFolders(projectId, sceneId);
-    }
+    // Note: Video saving will happen after generation completes
 
     // Send initial WebSocket update
     wsManager.emit('video_generation_started', {
@@ -247,13 +266,14 @@ export default async function handler(
             });
           },
           300, // 5 minutes timeout
-          3    // 3 seconds poll interval
+          2    // 2 seconds poll interval (Gen-3 Alpha Turbo is 7x faster)
         );
 
         if (videoUrl) {
-          // Save video metadata if project info provided
+          // Save video file if project info provided
+          let savedPath: string | undefined;
           if (projectId && sceneId) {
-            await saveVideoMetadata(projectId, sceneId, videoUrl, {
+            savedPath = await saveVideoFile(projectId, sceneId, videoUrl, {
               jobId,
               prompt: fullPrompt,
               duration: validDuration,
@@ -268,6 +288,7 @@ export default async function handler(
             projectId,
             sceneId,
             videoUrl,
+            savedPath,
             status: 'completed',
           });
         } else {

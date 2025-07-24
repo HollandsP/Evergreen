@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { 
   DocumentTextIcon,
@@ -9,6 +9,7 @@ import {
   CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '../../lib/utils';
+import { productionState, getProductionState } from '../../lib/production-state';
 
 export interface Stage {
   id: string;
@@ -42,10 +43,89 @@ const statusTextColors = {
 
 export const StageNavigation: React.FC<StageNavigationProps> = ({
   currentStage,
-  stages,
+  stages: propStages,
   onStageChange,
 }) => {
   const router = useRouter();
+  const [stages, setStages] = useState<Stage[]>(propStages);
+
+  useEffect(() => {
+    // Update stages based on production state
+    const updateStagesFromState = () => {
+      const state = getProductionState();
+      const updatedStages = propStages.map((stage) => {
+        // Determine status based on production state
+        let status: Stage['status'] = 'pending';
+        let isAvailable = true;
+
+        switch (stage.id) {
+          case 'script':
+            status = state.script.status === 'completed' ? 'completed' : 
+                    state.script.status === 'error' ? 'pending' : 
+                    state.script.status === 'idle' ? 'pending' : 'in_progress';
+            break;
+          case 'audio':
+            isAvailable = state.script.status === 'completed';
+            status = !isAvailable ? 'disabled' :
+                    state.audio.status === 'completed' ? 'completed' :
+                    state.audio.status === 'error' ? 'pending' :
+                    state.audio.status === 'idle' ? 'pending' : 'in_progress';
+            break;
+          case 'images':
+            isAvailable = state.script.status === 'completed';
+            status = !isAvailable ? 'disabled' :
+                    state.images.status === 'completed' ? 'completed' :
+                    state.images.status === 'error' ? 'pending' :
+                    state.images.status === 'idle' ? 'pending' : 'in_progress';
+            break;
+          case 'videos':
+            isAvailable = state.script.status === 'completed' && state.images.generatedImages.length > 0;
+            status = !isAvailable ? 'disabled' :
+                    state.video.status === 'completed' ? 'completed' :
+                    state.video.status === 'error' ? 'pending' :
+                    state.video.status === 'idle' ? 'pending' : 'in_progress';
+            break;
+          case 'assembly':
+            isAvailable = state.script.status === 'completed' && 
+                         state.audio.generatedAudio.length > 0 &&
+                         state.video.scenes.filter(s => s.status === 'completed').length > 0;
+            status = !isAvailable ? 'disabled' :
+                    state.assembly.status === 'completed' ? 'completed' :
+                    state.assembly.status === 'error' ? 'pending' :
+                    state.assembly.status === 'idle' ? 'pending' : 'in_progress';
+            break;
+        }
+
+        // Mark current stage as in_progress
+        if (stage.id === currentStage && status !== 'completed' && status !== 'disabled') {
+          status = 'in_progress';
+        }
+
+        return {
+          ...stage,
+          status,
+          isAvailable,
+        };
+      });
+
+      setStages(updatedStages);
+    };
+
+    updateStagesFromState();
+
+    // Subscribe to production state updates
+    const handleStateUpdate = () => {
+      updateStagesFromState();
+    };
+
+    productionState.on('stateUpdate', handleStateUpdate);
+    productionState.on('stageChange', handleStateUpdate);
+
+    return () => {
+      productionState.off('stateUpdate', handleStateUpdate);
+      productionState.off('stageChange', handleStateUpdate);
+    };
+  }, [propStages, currentStage]);
 
   const handleStageClick = (stage: Stage) => {
     if (!stage.isAvailable) return;
@@ -127,12 +207,12 @@ export const StageNavigation: React.FC<StageNavigationProps> = ({
   );
 };
 
-// Default stages configuration for The Descent production pipeline
+// Default stages configuration for production pipeline
 export const DEFAULT_PRODUCTION_STAGES: Stage[] = [
   {
     id: 'script',
     name: 'Script Processing',
-    description: 'Upload & parse "The Descent" script',
+    description: 'Upload & parse your script',
     icon: DocumentTextIcon,
     path: '/production/script',
     status: 'pending',
@@ -145,7 +225,7 @@ export const DEFAULT_PRODUCTION_STAGES: Stage[] = [
     icon: SpeakerWaveIcon,
     path: '/production/audio',
     status: 'pending',
-    isAvailable: true,
+    isAvailable: true, // Will be updated based on state
   },
   {
     id: 'images',
@@ -154,7 +234,7 @@ export const DEFAULT_PRODUCTION_STAGES: Stage[] = [
     icon: PhotoIcon,
     path: '/production/images',
     status: 'pending',
-    isAvailable: true,
+    isAvailable: true, // Will be updated based on state
   },
   {
     id: 'videos',
@@ -163,7 +243,7 @@ export const DEFAULT_PRODUCTION_STAGES: Stage[] = [
     icon: VideoCameraIcon,
     path: '/production/videos',
     status: 'pending',
-    isAvailable: true,
+    isAvailable: true, // Will be updated based on state
   },
   {
     id: 'assembly',
@@ -172,7 +252,7 @@ export const DEFAULT_PRODUCTION_STAGES: Stage[] = [
     icon: FilmIcon,
     path: '/production/assembly',
     status: 'pending',
-    isAvailable: true,
+    isAvailable: true, // Will be updated based on state
   },
 ];
 

@@ -5,10 +5,15 @@ import AudioGenerator from '@/components/stages/AudioGenerator';
 
 export default function AudioGenerationPage() {
   const router = useRouter();
+  const { projectId } = router.query;
 
   const handleComplete = () => {
-    // Navigate to the images stage
-    router.push('/production/images');
+    // Navigate to the images stage with projectId
+    if (projectId) {
+      router.push(`/production/images?projectId=${projectId}`);
+    } else {
+      router.push('/production/images');
+    }
   };
 
   return (
@@ -26,7 +31,10 @@ export default function AudioGenerationPage() {
         </div>
 
         {/* Audio Generator Component */}
-        <AudioGenerator onComplete={handleComplete} />
+        <AudioGenerator 
+          onComplete={handleComplete} 
+          projectId={projectId as string}
+        />
       </div>
     </ProductionLayout>
   );

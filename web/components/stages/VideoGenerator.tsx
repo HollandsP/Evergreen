@@ -33,9 +33,10 @@ interface Scene {
 
 interface VideoGeneratorProps {
   onComplete?: () => void;
+  projectId?: string;
 }
 
-export default function VideoGenerator({ onComplete }: VideoGeneratorProps) {
+export default function VideoGenerator({ onComplete, projectId }: VideoGeneratorProps) {
   const router = useRouter();
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [selectedScene, setSelectedScene] = useState<string | null>(null);
@@ -146,6 +147,8 @@ export default function VideoGenerator({ onComplete }: VideoGeneratorProps) {
           motionIntensity: scene.motionIntensity,
           lipSync: scene.lipSyncEnabled,
           audioUrl: scene.audioUrl,
+          projectId: projectId || JSON.parse(localStorage.getItem('productionState') || '{}').projectId || 'default',
+          sceneId: scene.id,
         }),
       });
 
