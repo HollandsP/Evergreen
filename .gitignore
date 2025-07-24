@@ -106,3 +106,4 @@ videos/
 *.bak
 *~
 .#*
+backups/output_backup_*.tar.gz
